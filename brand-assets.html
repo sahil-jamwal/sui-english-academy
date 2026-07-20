@@ -188,37 +188,103 @@ function renderBanner(){
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0,0,W,H);
 
-  const bg = ctx.createRadialGradient(W*0.78,-H*0.1, W*0.05, W*0.5,H*0.5, Math.max(W,H)*0.9);
-  bg.addColorStop(0,'#3a3266');
-  bg.addColorStop(0.45,'#251f45');
-  bg.addColorStop(1,'#1c1836');
+  // base gradient — deeper, richer than the flat footer tone for a premium cover feel
+  const bg = ctx.createRadialGradient(W*0.78,-H*0.1, W*0.05, W*0.5,H*0.5, Math.max(W,H)*0.95);
+  bg.addColorStop(0,'#3f3672');
+  bg.addColorStop(0.45,'#26204a');
+  bg.addColorStop(1,'#15122c');
   ctx.fillStyle = bg;
+  ctx.fillRect(0,0,W,H);
+
+  // soft ambient glows (amber top-right, teal bottom-left) for depth
+  ctx.save();
+  ctx.filter = 'blur(140px)';
+  const glow1 = ctx.createRadialGradient(W*0.84,H*0.05,0, W*0.84,H*0.05,640);
+  glow1.addColorStop(0,'rgba(245,166,35,.4)');
+  glow1.addColorStop(1,'rgba(245,166,35,0)');
+  ctx.fillStyle = glow1;
+  ctx.fillRect(0,0,W,H);
+  const glow2 = ctx.createRadialGradient(W*0.1,H*0.95,0, W*0.1,H*0.95,540);
+  glow2.addColorStop(0,'rgba(45,212,191,.28)');
+  glow2.addColorStop(1,'rgba(45,212,191,0)');
+  ctx.fillStyle = glow2;
+  ctx.fillRect(0,0,W,H);
+  ctx.restore();
+
+  // faint oversized flight-trail watermark for texture
+  ctx.save();
+  ctx.globalAlpha = .06;
+  ctx.strokeStyle = COLORS.amberBright;
+  ctx.lineWidth = 6;
+  ctx.setLineDash([3,16]);
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(W*0.04,H*0.78);
+  ctx.quadraticCurveTo(W*0.5,H*-0.18,W*0.98,H*0.32);
+  ctx.stroke();
+  ctx.restore();
+
+  // subtle vignette for a cinematic edge falloff
+  const vig = ctx.createRadialGradient(W/2,H/2,H*0.35, W/2,H/2,H*0.9);
+  vig.addColorStop(0,'rgba(0,0,0,0)');
+  vig.addColorStop(1,'rgba(0,0,0,.28)');
+  ctx.fillStyle = vig;
   ctx.fillRect(0,0,W,H);
 
   const safeW=1546, safeH=423;
   const safeX=(W-safeW)/2, safeY=(H-safeH)/2;
 
-  const markBox = 210;
-  const markCx = safeX + markBox/2 + 20;
-  const markCy = safeY + safeH*0.4;
-  drawMark(ctx, markCx, markCy, markBox);
+  const markBox = 220;
+  const markCx = safeX + markBox/2 + 30;
+  const markCy = safeY + safeH*0.42;
 
-  const textX = markCx + markBox/2 + 46;
+  // ambient glow behind the lockup
+  ctx.save();
+  ctx.filter = 'blur(55px)';
+  const lockupGlow = ctx.createRadialGradient(markCx+150,markCy,0, markCx+150,markCy,360);
+  lockupGlow.addColorStop(0,'rgba(245,166,35,.22)');
+  lockupGlow.addColorStop(1,'rgba(245,166,35,0)');
+  ctx.fillStyle = lockupGlow;
+  ctx.fillRect(safeX-100,safeY-100,safeW+200,safeH+200);
+  ctx.restore();
+
+  // mark, with a soft drop shadow for depth
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,.45)';
+  ctx.shadowBlur = 26;
+  ctx.shadowOffsetY = 10;
+  drawMark(ctx, markCx, markCy, markBox);
+  ctx.restore();
+
+  const textX = markCx + markBox/2 + 50;
   ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'left';
 
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,.4)';
+  ctx.shadowBlur = 20;
+  ctx.shadowOffsetY = 6;
   ctx.fillStyle = '#ffffff';
-  ctx.font = '800 92px Sora, sans-serif';
-  ctx.fillText('SUI', textX, markCy + 20);
+  ctx.font = '800 100px Sora, sans-serif';
+  ctx.fillText('SUI', textX, markCy + 22);
+  ctx.restore();
 
   ctx.fillStyle = COLORS.amber;
-  ctx.font = '600 26px Inter, sans-serif';
-  drawLetterSpaced(ctx, 'ENGLISH ACADEMY', textX + 4, markCy + 62, 6);
+  ctx.font = '600 27px Inter, sans-serif';
+  drawLetterSpaced(ctx, 'ENGLISH ACADEMY', textX + 4, markCy + 64, 7);
+
+  // thin fading accent divider
+  const dividerY = markCy + 90;
+  const dividerGrad = ctx.createLinearGradient(textX,0,textX+260,0);
+  dividerGrad.addColorStop(0,'rgba(245,166,35,.9)');
+  dividerGrad.addColorStop(1,'rgba(245,166,35,0)');
+  ctx.fillStyle = dividerGrad;
+  ctx.fillRect(textX+4,dividerY,260,2);
 
   ctx.textAlign = 'center';
-  ctx.fillStyle = COLORS.amber;
-  ctx.font = '600 42px Inter, sans-serif';
-  ctx.fillText('Speak English Confidently', W/2, safeY + safeH - 60);
+  ctx.fillStyle = '#FDECCB';
+  ctx.font = '600 40px Inter, sans-serif';
+  ctx.fillText('Speak English Confidently', W/2, safeY + safeH - 55);
 }
 
 function renderAll(){
