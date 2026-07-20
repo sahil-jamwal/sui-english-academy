@@ -351,11 +351,18 @@ function crc32(bytes){
   return (crc ^ 0xFFFFFFFF) >>> 0;
 }
 
+function toDosDateTime(date){
+  const dosTime = ((date.getHours()&0x1F)<<11) | ((date.getMinutes()&0x3F)<<5) | ((date.getSeconds()>>1)&0x1F);
+  const dosDate = (((date.getFullYear()-1980)&0x7F)<<9) | (((date.getMonth()+1)&0xF)<<5) | (date.getDate()&0x1F);
+  return {dosTime,dosDate};
+}
+
 function buildZip(files){
   const encoder = new TextEncoder();
   const localParts = [];
   const centralParts = [];
   let offset = 0;
+  const {dosTime,dosDate} = toDosDateTime(new Date());
 
   files.forEach(f=>{
     const nameBytes = encoder.encode(f.name);
@@ -368,8 +375,8 @@ function buildZip(files){
     local.setUint16(4,20,true);
     local.setUint16(6,0,true);
     local.setUint16(8,0,true);
-    local.setUint16(10,0,true);
-    local.setUint16(12,0x21,true);
+    local.setUint16(10,dosTime,true);
+    local.setUint16(12,dosDate,true);
     local.setUint32(14,crc,true);
     local.setUint32(18,size,true);
     local.setUint32(22,size,true);
@@ -383,8 +390,8 @@ function buildZip(files){
     central.setUint16(6,20,true);
     central.setUint16(8,0,true);
     central.setUint16(10,0,true);
-    central.setUint16(12,0,true);
-    central.setUint16(14,0x21,true);
+    central.setUint16(12,dosTime,true);
+    central.setUint16(14,dosDate,true);
     central.setUint32(16,crc,true);
     central.setUint32(20,size,true);
     central.setUint32(24,size,true);
