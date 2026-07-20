@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>SUI English Academy — Brand Asset Exporter (internal tool)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ivory:#FAF8F5;
+  --ink:#211C3D; --ink-soft:#4a4368;
+  --amber:#F5A623; --amber-ink:#B45309; --amber-bright:#FFCE73;
+  --teal:#2DD4BF;
+  --muted:#6b6580; --line:#ece7df;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--ivory);color:var(--ink);line-height:1.6;padding:40px 24px 80px}
+.wrap{max-width:1160px;margin:0 auto}
+h1{font-family:'Sora';font-weight:800;font-size:1.9rem;margin-bottom:8px}
+.lede{color:var(--muted);max-width:680px;margin-bottom:36px;font-size:.98rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;align-items:center;text-align:center;box-shadow:0 6px 20px rgba(33,28,61,.06)}
+.card.wide{grid-column:1/-1}
+.card h2{font-family:'Sora';font-weight:700;font-size:1.05rem;margin-bottom:2px}
+.dims{font-size:.78rem;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;font-weight:600;margin-bottom:16px}
+.preview-box{display:flex;align-items:center;justify-content:center;margin-bottom:18px;min-height:120px}
+.preview-box.circle canvas{border-radius:50%}
+canvas{display:block;background:#eee}
+.banner-preview{position:relative;width:100%;max-width:640px}
+.banner-preview canvas{width:100%;height:auto;border-radius:8px}
+.safe-overlay{position:absolute;border:1.5px dashed rgba(255,206,115,.85);border-radius:4px;pointer-events:none;
+  left:19.8%;top:17.66%;width:60.39%;height:29.375%}
+.btn{appearance:none;border:none;cursor:pointer;font-family:'Inter';font-weight:600;font-size:.88rem;
+  background:var(--ink);color:#fff;padding:11px 20px;border-radius:999px;transition:filter .2s}
+.btn:hover{filter:brightness(1.15)}
+.note{font-size:.72rem;color:var(--muted);margin-top:10px;max-width:280px}
+footer{margin-top:48px;font-size:.8rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Brand Asset Exporter</h1>
+  <p class="lede">Internal tool — not linked from the live site. Each card renders the SUI mark at the exact pixel dimensions a platform expects, using the site's brand colors and the high-contrast logo. Click Download to save a real PNG file at native resolution.</p>
+
+  <div class="grid">
+
+    <div class="card">
+      <h2>Instagram Profile Picture</h2>
+      <div class="dims">1080 × 1080 px</div>
+      <div class="preview-box circle"><canvas id="cv-ig" width="1080" height="1080" style="width:180px;height:180px"></canvas></div>
+      <button class="btn" data-canvas="cv-ig" data-filename="sui-instagram-profile-1080x1080.png">Download as PNG</button>
+      <p class="note">Logo sits inside the center 85% safe zone so it isn't cropped by Instagram's circular mask.</p>
+    </div>
+
+    <div class="card">
+      <h2>YouTube Channel Profile Picture</h2>
+      <div class="dims">800 × 800 px</div>
+      <div class="preview-box circle"><canvas id="cv-yt" width="800" height="800" style="width:180px;height:180px"></canvas></div>
+      <button class="btn" data-canvas="cv-yt" data-filename="sui-youtube-profile-800x800.png">Download as PNG</button>
+      <p class="note">Same circular-safe centering as Instagram.</p>
+    </div>
+
+    <div class="card">
+      <h2>Telegram Profile Picture</h2>
+      <div class="dims">512 × 512 px</div>
+      <div class="preview-box circle"><canvas id="cv-tg" width="512" height="512" style="width:180px;height:180px"></canvas></div>
+      <button class="btn" data-canvas="cv-tg" data-filename="sui-telegram-profile-512x512.png">Download as PNG</button>
+      <p class="note">Circular-safe centering, sized for Telegram's avatar.</p>
+    </div>
+
+    <div class="card">
+      <h2>WhatsApp Business Profile Picture</h2>
+      <div class="dims">500 × 500 px</div>
+      <div class="preview-box circle"><canvas id="cv-wa" width="500" height="500" style="width:180px;height:180px"></canvas></div>
+      <button class="btn" data-canvas="cv-wa" data-filename="sui-whatsapp-profile-500x500.png">Download as PNG</button>
+      <p class="note">Circular-safe centering, sized for WhatsApp Business.</p>
+    </div>
+
+    <div class="card wide">
+      <h2>YouTube Channel Banner / Cover Art</h2>
+      <div class="dims">2560 × 1440 px &nbsp;·&nbsp; safe area 1546 × 423 px (dashed guide, preview only)</div>
+      <div class="preview-box" style="width:100%">
+        <div class="banner-preview">
+          <canvas id="cv-banner" width="2560" height="1440"></canvas>
+          <div class="safe-overlay"></div>
+        </div>
+      </div>
+      <button class="btn" data-canvas="cv-banner" data-filename="sui-youtube-banner-2560x1440.png">Download as PNG</button>
+      <p class="note">Logo, wordmark and tagline are kept inside the 1546×423 TV/mobile/desktop safe area. Dashed guide is a preview overlay only — it is not baked into the exported PNG.</p>
+    </div>
+
+  </div>
+
+  <footer>Open this file directly in a browser (double-click, or drag it into a tab) whenever you need fresh exports. Nothing here is uploaded anywhere — everything renders and downloads locally.</footer>
+</div>
+
+<script>
+const COLORS = {
+  ink:'#211C3D', amber:'#F5A623', amberInk:'#B45309', amberBright:'#FFCE73', teal:'#2DD4BF'
+};
+
+function roundRectPath(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);
+  ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h);
+  ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r);
+  ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+
+// draws the SUI bars+trail+plane mark (no wordmark) inside a box*box square, height-contained, centered at cx,cy
+function drawMark(ctx,cx,cy,box){
+  const vbW=64, vbH=80;
+  const scale = box/vbH;
+  const scaledW = vbW*scale, scaledH = vbH*scale;
+  const offX = cx - scaledW/2, offY = cy - scaledH/2;
+
+  ctx.save();
+  ctx.translate(offX,offY);
+  ctx.scale(scale,scale);
+
+  const barGrad = ctx.createLinearGradient(0,80,64,0);
+  barGrad.addColorStop(0,COLORS.teal);
+  barGrad.addColorStop(1,COLORS.amber);
+  ctx.fillStyle = barGrad;
+  [[2,52,11,22],[18,42,11,32],[34,30,11,44],[50,20,11,54]].forEach(([x,y,w,h])=>{
+    roundRectPath(ctx,x,y,w,h,5.5);
+    ctx.fill();
+  });
+
+  ctx.beginPath();
+  ctx.moveTo(8,46);
+  ctx.quadraticCurveTo(30,2,54,14);
+  ctx.strokeStyle = COLORS.amberBright;
+  ctx.globalAlpha = .95;
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.setLineDash([1.6,4.2]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+
+  ctx.save();
+  ctx.translate(54,14);
+  ctx.rotate(26.565 * Math.PI/180);
+  ctx.beginPath();
+  ctx.moveTo(-6,-3.5);
+  ctx.lineTo(7,0);
+  ctx.lineTo(-6,3.5);
+  ctx.lineTo(-3,0);
+  ctx.closePath();
+  ctx.fillStyle = COLORS.amberBright;
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function renderProfile(id,size){
+  const canvas = document.getElementById(id);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,size,size);
+  ctx.fillStyle = COLORS.ink;
+  ctx.fillRect(0,0,size,size);
+  drawMark(ctx, size/2, size/2, size*0.85);
+}
+
+function drawLetterSpaced(ctx,text,x,y,spacing){
+  let cx = x;
+  for(const ch of text){
+    ctx.fillText(ch,cx,y);
+    cx += ctx.measureText(ch).width + spacing;
+  }
+  return cx;
+}
+
+function renderBanner(){
+  const W=2560, H=1440;
+  const canvas = document.getElementById('cv-banner');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  const bg = ctx.createRadialGradient(W*0.78,-H*0.1, W*0.05, W*0.5,H*0.5, Math.max(W,H)*0.9);
+  bg.addColorStop(0,'#3a3266');
+  bg.addColorStop(0.45,'#251f45');
+  bg.addColorStop(1,'#1c1836');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,W,H);
+
+  const safeW=1546, safeH=423;
+  const safeX=(W-safeW)/2, safeY=(H-safeH)/2;
+
+  const markBox = 210;
+  const markCx = safeX + markBox/2 + 20;
+  const markCy = safeY + safeH*0.4;
+  drawMark(ctx, markCx, markCy, markBox);
+
+  const textX = markCx + markBox/2 + 46;
+  ctx.textBaseline = 'alphabetic';
+  ctx.textAlign = 'left';
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '800 92px Sora, sans-serif';
+  ctx.fillText('SUI', textX, markCy + 20);
+
+  ctx.fillStyle = COLORS.amber;
+  ctx.font = '600 26px Inter, sans-serif';
+  drawLetterSpaced(ctx, 'ENGLISH ACADEMY', textX + 4, markCy + 62, 6);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = COLORS.amber;
+  ctx.font = '600 42px Inter, sans-serif';
+  ctx.fillText('Speak English Confidently', W/2, safeY + safeH - 60);
+}
+
+function renderAll(){
+  renderProfile('cv-ig',1080);
+  renderProfile('cv-yt',800);
+  renderProfile('cv-tg',512);
+  renderProfile('cv-wa',500);
+  renderBanner();
+}
+
+function downloadCanvas(canvas,filename){
+  canvas.toBlob(blob=>{
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  },'image/png');
+}
+
+document.querySelectorAll('button[data-canvas]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const canvas = document.getElementById(btn.dataset.canvas);
+    downloadCanvas(canvas, btn.dataset.filename);
+  });
+});
+
+if(document.fonts && document.fonts.ready){
+  document.fonts.load('800 92px Sora');
+  document.fonts.load('600 26px Inter');
+  document.fonts.ready.then(renderAll);
+}
+renderAll();
+window.addEventListener('load',renderAll);
+</script>
+</body>
+</html>
