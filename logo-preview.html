@@ -82,7 +82,7 @@ const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- generic replay engine ---------- */
 function playSvg(svg){
-  svg.querySelectorAll('animate[data-delay], animateTransform[data-delay]').forEach(el=>{
+  svg.querySelectorAll('animate[data-delay], animateTransform[data-delay], animateMotion[data-delay]').forEach(el=>{
     const delay = +el.dataset.delay || 0;
     setTimeout(()=>{ if(el.beginElement) try{ el.beginElement(); }catch(e){} }, delay);
   });
@@ -92,7 +92,7 @@ function wireReplay(root){
     const tile = svg.closest('.tile') || svg;
     tile.tabIndex = 0;
     if(prefersReduced){
-      svg.querySelectorAll('animate, animateTransform').forEach(a=>{a.setAttribute('begin','0s');a.setAttribute('dur','.01s');});
+      svg.querySelectorAll('animate, animateTransform, animateMotion').forEach(a=>{a.setAttribute('begin','0s');a.setAttribute('dur','.01s');});
       return;
     }
     playSvg(svg);
