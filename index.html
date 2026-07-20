@@ -93,12 +93,6 @@ a{color:inherit}
 .logo .trail{stroke:var(--amber-ink);stroke-opacity:.92}
 .logo.on-dark .plane path{fill:var(--amber-bright)}
 .logo.on-dark .trail{stroke:var(--amber-bright);stroke-opacity:.95}
-@keyframes barRise{from{transform:scaleY(0);opacity:0}to{transform:scaleY(1);opacity:1}}
-.logo .bar{transform-box:fill-box;transform-origin:50% 100%;animation:barRise .5s cubic-bezier(.22,1,.36,1) both}
-.logo .bar:nth-child(1){animation-delay:0s}
-.logo .bar:nth-child(2){animation-delay:.08s}
-.logo .bar:nth-child(3){animation-delay:.16s}
-.logo .bar:nth-child(4){animation-delay:.24s}
 .logo .bars,.logo .wm{transition:filter .25s ease}
 .logo:hover .bars,.logo:focus-visible .bars,.logo:hover .wm,.logo:focus-visible .wm{filter:brightness(1.2)}
 @media (prefers-reduced-motion: reduce){.logo .bar{animation:none!important;opacity:1;transform:none}}
