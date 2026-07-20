@@ -96,21 +96,24 @@ function paintBackdrop(ctx,W,H){
   ctx.fillStyle = base;
   ctx.fillRect(0,0,W,H);
 
-  ctx.save();
-  ctx.filter = `blur(${Math.max(W,H)*0.065}px)`;
+  // soft ambient glows — built from multi-stop radial gradients (not ctx.filter blur, which is
+  // extremely expensive at full banner resolution) so they render instantly at any canvas size
   const glowR = Math.max(W,H)*0.42;
   const glow1 = ctx.createRadialGradient(W*0.85,H*0.04,0, W*0.85,H*0.04, glowR);
-  glow1.addColorStop(0,'rgba(245,166,35,.36)');
+  glow1.addColorStop(0,'rgba(245,166,35,.34)');
+  glow1.addColorStop(0.35,'rgba(245,166,35,.20)');
+  glow1.addColorStop(0.7,'rgba(245,166,35,.06)');
   glow1.addColorStop(1,'rgba(245,166,35,0)');
   ctx.fillStyle = glow1;
   ctx.fillRect(0,0,W,H);
 
   const glow2 = ctx.createRadialGradient(W*0.07,H*0.97,0, W*0.07,H*0.97, glowR*0.85);
-  glow2.addColorStop(0,'rgba(45,212,191,.22)');
+  glow2.addColorStop(0,'rgba(45,212,191,.20)');
+  glow2.addColorStop(0.35,'rgba(45,212,191,.12)');
+  glow2.addColorStop(0.7,'rgba(45,212,191,.04)');
   glow2.addColorStop(1,'rgba(45,212,191,0)');
   ctx.fillStyle = glow2;
   ctx.fillRect(0,0,W,H);
-  ctx.restore();
 
   const vig = ctx.createRadialGradient(W/2,H/2,Math.max(W,H)*0.32, W/2,H/2,Math.max(W,H)*0.78);
   vig.addColorStop(0,'rgba(0,0,0,0)');
