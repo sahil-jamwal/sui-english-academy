@@ -889,11 +889,15 @@ if(prefersReduced){
     const delay=logo.classList.contains('on-dark')?600:500;
     const motion=svg.querySelector('.planeMotion');
     const reveal=svg.querySelector('.trailReveal');
-    let timer;
+    const bars=[...svg.querySelectorAll('.bar')];
+    let timers=[];
     const playLogo=()=>{
-      svg.querySelectorAll('.bar').forEach(b=>{b.style.animation='none';void b.offsetWidth;b.style.animation='';});
-      clearTimeout(timer);
-      timer=setTimeout(()=>{if(motion)motion.beginElement();if(reveal)reveal.beginElement();},delay);
+      timers.forEach(clearTimeout);
+      timers=[];
+      bars.forEach((bar,i)=>{
+        timers.push(setTimeout(()=>{bar.querySelectorAll('animate').forEach(a=>a.beginElement());},i*80));
+      });
+      timers.push(setTimeout(()=>{if(motion)motion.beginElement();if(reveal)reveal.beginElement();},delay));
     };
     playLogo();
     logo.addEventListener('mouseenter',playLogo);
