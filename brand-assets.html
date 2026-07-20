@@ -252,15 +252,14 @@ function renderLockupBanner(cfg){
   const markCx = safeX + 30*s + markBox/2;
   const markCy = safeY + safeH*0.42;
 
-  // ambient glow behind the lockup for extra depth
-  ctx.save();
-  ctx.filter = `blur(${55*s}px)`;
+  // ambient glow behind the lockup for extra depth — soft multi-stop gradient, no filter blur
   const lockupGlow = ctx.createRadialGradient(markCx+150*s,markCy,0, markCx+150*s,markCy,360*s);
-  lockupGlow.addColorStop(0,'rgba(245,166,35,.22)');
+  lockupGlow.addColorStop(0,'rgba(245,166,35,.20)');
+  lockupGlow.addColorStop(0.4,'rgba(245,166,35,.10)');
+  lockupGlow.addColorStop(0.75,'rgba(245,166,35,.03)');
   lockupGlow.addColorStop(1,'rgba(245,166,35,0)');
   ctx.fillStyle = lockupGlow;
   ctx.fillRect(safeX-100,safeY-100,safeW+200,safeH+200);
-  ctx.restore();
 
   drawMark(ctx, markCx, markCy, markBox);
 
