@@ -881,7 +881,26 @@ footer .foot-link{background:none;border:none;padding:0;font-family:inherit;curs
 // respect prefers-reduced-motion across all animations on the page
 const prefersReduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 if(prefersReduced){
-  document.querySelectorAll('.plane-anim animateMotion').forEach(am=>{am.setAttribute('begin','0s');am.setAttribute('dur','0.01s');});
+  document.querySelectorAll('.plane-anim animateMotion, .plane-anim animate').forEach(am=>{am.setAttribute('begin','0s');am.setAttribute('dur','0.01s');});
+}else{
+  // logo intro/replay: bars rise immediately, plane flies + trail draws in after a short delay
+  document.querySelectorAll('.logo').forEach(logo=>{
+    const svg=logo.querySelector('.plane-anim');
+    if(!svg)return;
+    const delay=logo.classList.contains('on-dark')?600:500;
+    const motion=svg.querySelector('.planeMotion');
+    const reveal=svg.querySelector('.trailReveal');
+    let timer;
+    const playLogo=()=>{
+      svg.querySelectorAll('.bar').forEach(b=>{b.style.animation='none';void b.offsetWidth;b.style.animation='';});
+      clearTimeout(timer);
+      timer=setTimeout(()=>{if(motion)motion.beginElement();if(reveal)reveal.beginElement();},delay);
+    };
+    playLogo();
+    logo.addEventListener('mouseenter',playLogo);
+    logo.addEventListener('touchstart',playLogo,{passive:true});
+    logo.addEventListener('focus',playLogo);
+  });
 }
 
 // nav scroll state
