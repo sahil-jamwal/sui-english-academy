@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>SUI English Academy — Brand Asset Exporter (internal tool)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ivory:#FAF8F5;
+  --ink:#211C3D; --ink-soft:#4a4368;
+  --amber:#F5A623; --amber-ink:#B45309; --amber-bright:#FFCE73;
+  --gold:#D4AF37;
+  --muted:#6b6580; --line:#ece7df;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--ivory);color:var(--ink);line-height:1.6;padding:40px 24px 80px}
+.wrap{max-width:1200px;margin:0 auto}
+h1{font-family:'Sora';font-weight:800;font-size:1.9rem;margin-bottom:8px}
+.lede{color:var(--muted);max-width:700px;margin-bottom:28px;font-size:.98rem}
+h2.section-head{font-family:'Sora';font-weight:700;font-size:1.25rem;margin:44px 0 4px}
+.section-sub{color:var(--muted);font-size:.85rem;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px}
+.grid.banners{grid-template-columns:1fr}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;align-items:center;text-align:center;box-shadow:0 6px 20px rgba(33,28,61,.06)}
+.card h3{font-family:'Sora';font-weight:700;font-size:1.02rem;margin-bottom:2px}
+.dims{font-size:.76rem;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;font-weight:600;margin-bottom:16px}
+.preview-box{display:flex;align-items:center;justify-content:center;margin-bottom:16px;min-height:150px}
+.profile-shell{width:150px;height:150px;border-radius:50%;overflow:hidden;box-shadow:0 10px 26px rgba(33,28,61,.18)}
+.profile-shell canvas{display:block;width:150px;height:150px}
+canvas{background:#15122c}
+.banner-preview{position:relative;width:100%;max-width:680px;border-radius:10px;overflow:hidden;box-shadow:0 10px 30px rgba(33,28,61,.16)}
+.banner-preview canvas{display:block;width:100%;height:auto}
+.safe-overlay{position:absolute;border:1.5px dashed rgba(255,206,115,.85);border-radius:4px;pointer-events:none}
+.btn{appearance:none;border:none;cursor:pointer;font-family:'Inter';font-weight:600;font-size:.86rem;
+  background:var(--ink);color:#fff;padding:10px 20px;border-radius:999px;transition:filter .2s}
+.btn:hover{filter:brightness(1.2)}
+.btn-all{appearance:none;border:none;cursor:pointer;font-family:'Sora';font-weight:700;
+  background:linear-gradient(135deg,var(--amber),var(--gold));color:#241a04;font-size:1rem;padding:16px 34px;
+  border-radius:999px;margin-bottom:36px;box-shadow:0 14px 30px rgba(212,175,55,.34);transition:filter .2s,transform .2s}
+.btn-all:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn-all:disabled{opacity:.65;cursor:wait;filter:none;transform:none}
+.note{font-size:.72rem;color:var(--muted);margin-top:6px;max-width:300px}
+footer{margin-top:48px;font-size:.8rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Brand Asset Exporter</h1>
+  <p class="lede">Internal tool — not linked from the live site. Every asset below uses the confirmed logo (rising bars + paper plane, Gold &amp; Black variant) rendered fresh at true full resolution for each platform. Nothing is uploaded anywhere — everything renders and downloads locally in your browser.</p>
+
+  <button class="btn btn-all" id="downloadAllBtn">Download All 9 as ZIP</button>
+
+  <h2 class="section-head">Profile Pictures</h2>
+  <p class="section-sub">Logo sits inside a centered ~85% safe zone on a polished gradient icon background, so nothing critical is lost to circular cropping.</p>
+  <div class="grid" id="profileGrid"></div>
+
+  <h2 class="section-head">Cover / Banner Images</h2>
+  <p class="section-sub">Dashed outline on each preview marks the guaranteed-visible safe zone (desktop + mobile). It's a preview guide only — it is never baked into the downloaded PNG.</p>
+  <div class="grid banners" id="bannerGrid"></div>
+
+  <footer>Open this file directly in a browser (double-click, or drag it into a tab) whenever you need fresh exports.</footer>
+</div>
+
+<script>
+/* ===================== colors ===================== */
+const COLORS = {
+  logoInk:'#171717', logoInkBright:'#575757', logoGold:'#D4AF37', logoGoldBright:'#F0C864',
+  amber:'#F5A623', amberInk:'#B45309', amberBright:'#FFCE73', teal:'#2DD4BF'
+};
+
+/* ===================== shared drawing helpers ===================== */
+function roundRectPath(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);
+  ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h);
+  ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r);
+  ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+
+// hero-matching dark gradient backdrop + amber/teal ambient glows + vignette, scale-independent
+function paintBackdrop(ctx,W,H){
+  const base = ctx.createRadialGradient(W*0.78,H*-0.08,Math.min(W,H)*0.05, W*0.5,H*0.5, Math.max(W,H)*0.95);
+  base.addColorStop(0,'#3a3266');
+  base.addColorStop(0.45,'#26204a');
+  base.addColorStop(1,'#15122c');
+  ctx.fillStyle = base;
+  ctx.fillRect(0,0,W,H);
+
+  // soft ambient glows — built from multi-stop radial gradients (not ctx.filter blur, which is
+  // extremely expensive at full banner resolution) so they render instantly at any canvas size
+  const glowR = Math.max(W,H)*0.42;
+  const glow1 = ctx.createRadialGradient(W*0.85,H*0.04,0, W*0.85,H*0.04, glowR);
+  glow1.addColorStop(0,'rgba(245,166,35,.34)');
+  glow1.addColorStop(0.35,'rgba(245,166,35,.20)');
+  glow1.addColorStop(0.7,'rgba(245,166,35,.06)');
+  glow1.addColorStop(1,'rgba(245,166,35,0)');
+  ctx.fillStyle = glow1;
+  ctx.fillRect(0,0,W,H);
+
+  const glow2 = ctx.createRadialGradient(W*0.07,H*0.97,0, W*0.07,H*0.97, glowR*0.85);
+  glow2.addColorStop(0,'rgba(45,212,191,.20)');
+  glow2.addColorStop(0.35,'rgba(45,212,191,.12)');
+  glow2.addColorStop(0.7,'rgba(45,212,191,.04)');
+  glow2.addColorStop(1,'rgba(45,212,191,0)');
+  ctx.fillStyle = glow2;
+  ctx.fillRect(0,0,W,H);
+
+  const vig = ctx.createRadialGradient(W/2,H/2,Math.max(W,H)*0.32, W/2,H/2,Math.max(W,H)*0.78);
+  vig.addColorStop(0,'rgba(0,0,0,0)');
+  vig.addColorStop(1,'rgba(0,0,0,.26)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0,0,W,H);
+}
+
+// draws the SUI bars+trail+plane mark (final Gold & Black variant), centered at cx,cy, contained in a box*box square
+// shadowBlur/Offset are set as CONSTANTS in local (0-64/0-80) viewBox units, so they scale proportionally
+// with `box` automatically via the active canvas transform — no manual per-call math needed.
+function drawMark(ctx,cx,cy,box,opts={}){
+  const shadow = opts.shadow !== false;
+  const vbW=64, vbH=80;
+  const scale = box/vbH;
+  const offX = cx - (vbW*scale)/2, offY = cy - (vbH*scale)/2;
+
+  ctx.save();
+  ctx.translate(offX,offY);
+  ctx.scale(scale,scale);
+
+  ctx.save();
+  if(shadow){
+    ctx.shadowColor = 'rgba(6,4,14,.55)';
+    ctx.shadowBlur = 7;
+    ctx.shadowOffsetY = 3;
+  }
+  const barGrad = ctx.createLinearGradient(0,80,64,0);
+  barGrad.addColorStop(0,COLORS.logoInkBright);
+  barGrad.addColorStop(1,COLORS.logoGold);
+  ctx.fillStyle = barGrad;
+  [[2,52,11,22],[18,42,11,32],[34,30,11,44],[50,20,11,54]].forEach(([x,y,w,h])=>{
+    roundRectPath(ctx,x,y,w,h,5.5);
+    ctx.fill();
+  });
+  ctx.restore();
+
+  ctx.beginPath();
+  ctx.moveTo(8,46);
+  ctx.quadraticCurveTo(30,2,54,14);
+  ctx.strokeStyle = COLORS.logoGoldBright;
+  ctx.globalAlpha = .95;
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.setLineDash([1.6,4.2]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+
+  ctx.save();
+  ctx.translate(54,14);
+  ctx.rotate(26.565 * Math.PI/180);
+  ctx.beginPath();
+  ctx.moveTo(-6,-3.5);
+  ctx.lineTo(7,0);
+  ctx.lineTo(-6,3.5);
+  ctx.lineTo(-3,0);
+  ctx.closePath();
+  ctx.fillStyle = COLORS.logoGoldBright;
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawLetterSpaced(ctx,text,x,y,spacing){
+  let cx = x;
+  for(const ch of text){
+    ctx.fillText(ch,cx,y);
+    cx += ctx.measureText(ch).width + spacing;
+  }
+  return cx;
+}
+
+function fitFontPx(ctx,text,weight,family,maxWidth,startPx,minPx){
+  let px = startPx;
+  ctx.font = `${weight} ${px}px ${family}`;
+  while(ctx.measureText(text).width > maxWidth && px > minPx){
+    px -= 1;
+    ctx.font = `${weight} ${px}px ${family}`;
+  }
+  return px;
+}
+
+/* ===================== profile pictures (app-icon style) ===================== */
+function renderProfile(id,size){
+  const canvas = document.getElementById(id);
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,size,size);
+  paintBackdrop(ctx,size,size);
+  drawMark(ctx, size/2, size/2, size*0.85);
+}
+
+/* ===================== side-by-side lockup banners (Facebook cover / YouTube banner) ===================== */
+// scale (s) is fit iteratively against the safe zone using real measured text widths,
+// so the exact same lockup logic works correctly across very different safe-zone aspect ratios.
+function fitLockupScale(ctx, safeW, safeH, tagline){
+  let s = safeH/423;
+  for(let i=0;i<6;i++){
+    const markBox=220*s, padL=30*s, gap=50*s;
+    const blockOffset = padL + markBox + gap;
+
+    ctx.font = `800 ${100*s}px Sora, sans-serif`;
+    const suiW = ctx.measureText('SUI').width;
+
+    ctx.font = `600 ${27*s}px Inter, sans-serif`;
+    let eaW = 0;
+    for(const ch of 'ENGLISH ACADEMY'){ eaW += ctx.measureText(ch).width + 7*s; }
+    eaW -= 7*s;
+
+    ctx.font = `600 ${40*s}px Inter, sans-serif`;
+    const taglineW = ctx.measureText(tagline).width;
+
+    const blockRight = blockOffset + Math.max(suiW,eaW);
+    const worstNeeded = Math.max(blockRight, taglineW);
+    const margin = safeW*0.94;
+    if(worstNeeded <= margin) break;
+    s *= (margin/worstNeeded) * 0.98;
+  }
+  return s;
+}
+
+function renderLockupBanner(cfg){
+  const {id,W,H,safeW,safeH,tagline} = cfg;
+  const canvas = document.getElementById(id);
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  paintBackdrop(ctx,W,H);
+
+  const safeX = (W-safeW)/2, safeY = (H-safeH)/2;
+  const s = fitLockupScale(ctx, safeW, safeH, tagline);
+
+  const markBox = 220*s;
+  const markCx = safeX + 30*s + markBox/2;
+  const markCy = safeY + safeH*0.42;
+
+  // ambient glow behind the lockup for extra depth — soft multi-stop gradient, no filter blur
+  const lockupGlow = ctx.createRadialGradient(markCx+150*s,markCy,0, markCx+150*s,markCy,360*s);
+  lockupGlow.addColorStop(0,'rgba(245,166,35,.20)');
+  lockupGlow.addColorStop(0.4,'rgba(245,166,35,.10)');
+  lockupGlow.addColorStop(0.75,'rgba(245,166,35,.03)');
+  lockupGlow.addColorStop(1,'rgba(245,166,35,0)');
+  ctx.fillStyle = lockupGlow;
+  ctx.fillRect(safeX-100,safeY-100,safeW+200,safeH+200);
+
+  drawMark(ctx, markCx, markCy, markBox);
+
+  const textX = markCx + markBox/2 + 50*s;
+  ctx.textBaseline = 'alphabetic';
+  ctx.textAlign = 'left';
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,.4)';
+  ctx.shadowBlur = 20*s;
+  ctx.shadowOffsetY = 6*s;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `800 ${100*s}px Sora, sans-serif`;
+  ctx.fillText('SUI', textX, markCy + 22*s);
+  ctx.restore();
+
+  ctx.fillStyle = COLORS.amber;
+  ctx.font = `600 ${27*s}px Inter, sans-serif`;
+  drawLetterSpaced(ctx, 'ENGLISH ACADEMY', textX + 4*s, markCy + 64*s, 7*s);
+
+  const dividerY = markCy + 90*s;
+  const dividerGrad = ctx.createLinearGradient(textX,0,textX+260*s,0);
+  dividerGrad.addColorStop(0,'rgba(245,166,35,.9)');
+  dividerGrad.addColorStop(1,'rgba(245,166,35,0)');
+  ctx.fillStyle = dividerGrad;
+  ctx.fillRect(textX+4*s,dividerY,260*s,2*s);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#FDECCB';
+  ctx.font = `600 ${40*s}px Inter, sans-serif`;
+  ctx.fillText(tagline, W/2, safeY + safeH - 40*s);
+}
+
+/* ===================== LinkedIn banner — minimal: mark + one wordmark line + short tagline ===================== */
+function renderSimpleBanner(cfg){
+  const {id,W,H,tagline} = cfg;
+  const canvas = document.getElementById(id);
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  paintBackdrop(ctx,W,H);
+
+  const markBox = H*0.58;
+  const leftMargin = W*0.045;
+  const markCx = leftMargin + markBox/2;
+  const markCy = H/2;
+
+  drawMark(ctx, markCx, markCy, markBox);
+
+  const textX = markCx + markBox/2 + W*0.03;
+  const maxTextW = W*0.93 - textX;
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#ffffff';
+  const wmPx = fitFontPx(ctx,'SUI English Academy','700','Sora, sans-serif', maxTextW, H*0.30, 14);
+  ctx.font = `700 ${wmPx}px Sora, sans-serif`;
+  ctx.fillText('SUI English Academy', textX, H*0.44);
+
+  ctx.fillStyle = COLORS.amberBright;
+  const tagPx = fitFontPx(ctx,tagline,'500','Inter, sans-serif', maxTextW, H*0.155, 10);
+  ctx.font = `500 ${tagPx}px Inter, sans-serif`;
+  ctx.fillText(tagline, textX, H*0.44 + wmPx*0.62 + tagPx*0.55);
+}
+
+/* ===================== asset registry ===================== */
+const TAGLINE = 'Speak English Confidently in 90 Days.';
+
+const PROFILE_ASSETS = [
+  { id:'cv-fb-profile', size:180, label:'Facebook', filename:'facebook-profile-180x180.png' },
+  { id:'cv-ig-profile', size:320, label:'Instagram', filename:'instagram-profile-320x320.png' },
+  { id:'cv-yt-profile', size:800, label:'YouTube', filename:'youtube-profile-800x800.png' },
+  { id:'cv-li-logo', size:300, label:'LinkedIn Company Page Logo', filename:'linkedin-logo-300x300.png' },
+  { id:'cv-wa-profile', size:640, label:'WhatsApp', filename:'whatsapp-profile-640x640.png' },
+  { id:'cv-tg-profile', size:512, label:'Telegram', filename:'telegram-profile-512x512.png' },
+];
+
+const BANNER_ASSETS = [
+  { id:'cv-fb-cover', W:1640, H:922, safeW:640, safeH:312, label:'Facebook Cover', filename:'facebook-cover-1640x922.png', tagline:TAGLINE, mode:'lockup' },
+  { id:'cv-yt-banner', W:2560, H:1440, safeW:1546, safeH:423, label:'YouTube Banner', filename:'youtube-banner-2560x1440.png', tagline:TAGLINE, mode:'lockup' },
+  { id:'cv-li-banner', W:1128, H:191, safeW:null, safeH:null, label:'LinkedIn Company Banner', filename:'linkedin-banner-1128x191.png', tagline:TAGLINE, mode:'simple' },
+];
+
+/* ===================== build the page markup ===================== */
+const profileGrid = document.getElementById('profileGrid');
+profileGrid.innerHTML = PROFILE_ASSETS.map(a=>`
+  <div class="card">
+    <h3>${a.label}</h3>
+    <div class="dims">${a.size} × ${a.size} px</div>
+    <div class="preview-box"><div class="profile-shell"><canvas id="${a.id}" width="${a.size}" height="${a.size}"></canvas></div></div>
+    <button class="btn" data-canvas="${a.id}" data-filename="${a.filename}">Download PNG</button>
+    <p class="note">Logo centered in a ~85% safe zone so nothing critical is lost to circular cropping.</p>
+  </div>
+`).join('');
+
+const bannerGrid = document.getElementById('bannerGrid');
+bannerGrid.innerHTML = BANNER_ASSETS.map(a=>`
+  <div class="card">
+    <h3>${a.label}</h3>
+    <div class="dims">${a.W} × ${a.H} px${a.safeW ? ` &nbsp;·&nbsp; safe area ${a.safeW} × ${a.safeH} px (dashed guide, preview only)` : ''}</div>
+    <div class="preview-box" style="width:100%">
+      <div class="banner-preview">
+        <canvas id="${a.id}" width="${a.W}" height="${a.H}"></canvas>
+        ${a.safeW ? `<div class="safe-overlay" id="overlay-${a.id}"></div>` : ''}
+      </div>
+    </div>
+    <button class="btn" data-canvas="${a.id}" data-filename="${a.filename}">Download PNG</button>
+    <p class="note">${a.safeW ? 'Logo, wordmark and tagline are auto-fit to stay fully inside the dashed safe area — guaranteed visible across devices.' : 'Kept deliberately simple — just the logo and a short tagline, generously spaced.'}</p>
+  </div>
+`).join('');
+
+/* position each safe-zone overlay div to match its canvas's real aspect/safe-zone percentages */
+function positionOverlays(){
+  BANNER_ASSETS.forEach(a=>{
+    if(!a.safeW) return;
+    const overlay = document.getElementById(`overlay-${a.id}`);
+    const left = (a.W-a.safeW)/2/a.W*100;
+    const top = (a.H-a.safeH)/2/a.H*100;
+    overlay.style.left = left+'%';
+    overlay.style.top = top+'%';
+    overlay.style.width = (a.safeW/a.W*100)+'%';
+    overlay.style.height = (a.safeH/a.H*100)+'%';
+  });
+}
+
+function renderAll(){
+  PROFILE_ASSETS.forEach(a=>renderProfile(a.id,a.size));
+  BANNER_ASSETS.forEach(a=>{
+    if(a.mode==='simple') renderSimpleBanner(a);
+    else renderLockupBanner(a);
+  });
+  positionOverlays();
+}
+
+/* ===================== PNG download wiring ===================== */
+function canvasBlob(canvas){
+  return new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+}
+
+function triggerDownload(blob,filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+async function downloadCanvas(canvas,filename){
+  const blob = await canvasBlob(canvas);
+  triggerDownload(blob,filename);
+}
+
+document.addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-canvas]');
+  if(!btn) return;
+  const canvas = document.getElementById(btn.dataset.canvas);
+  downloadCanvas(canvas, btn.dataset.filename);
+});
+
+/* ---- minimal, dependency-free ZIP writer (stored/no-compression — PNGs are already compressed) ---- */
+const CRC_TABLE = (()=>{
+  const table = new Uint32Array(256);
+  for(let n=0;n<256;n++){
+    let c=n;
+    for(let k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1);
+    table[n]=c>>>0;
+  }
+  return table;
+})();
+
+function crc32(bytes){
+  let crc = 0xFFFFFFFF;
+  for(let i=0;i<bytes.length;i++) crc = (crc>>>8) ^ CRC_TABLE[(crc ^ bytes[i]) & 0xFF];
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function toDosDateTime(date){
+  const dosTime = ((date.getHours()&0x1F)<<11) | ((date.getMinutes()&0x3F)<<5) | ((date.getSeconds()>>1)&0x1F);
+  const dosDate = (((date.getFullYear()-1980)&0x7F)<<9) | (((date.getMonth()+1)&0xF)<<5) | (date.getDate()&0x1F);
+  return {dosTime,dosDate};
+}
+
+function buildZip(files){
+  const encoder = new TextEncoder();
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+  const {dosTime,dosDate} = toDosDateTime(new Date());
+
+  files.forEach(f=>{
+    const nameBytes = encoder.encode(f.name);
+    const data = new Uint8Array(f.data);
+    const crc = crc32(data);
+    const size = data.length;
+
+    const local = new DataView(new ArrayBuffer(30));
+    local.setUint32(0,0x04034b50,true);
+    local.setUint16(4,20,true);
+    local.setUint16(6,0,true);
+    local.setUint16(8,0,true);
+    local.setUint16(10,dosTime,true);
+    local.setUint16(12,dosDate,true);
+    local.setUint32(14,crc,true);
+    local.setUint32(18,size,true);
+    local.setUint32(22,size,true);
+    local.setUint16(26,nameBytes.length,true);
+    local.setUint16(28,0,true);
+    localParts.push(new Uint8Array(local.buffer),nameBytes,data);
+
+    const central = new DataView(new ArrayBuffer(46));
+    central.setUint32(0,0x02014b50,true);
+    central.setUint16(4,20,true);
+    central.setUint16(6,20,true);
+    central.setUint16(8,0,true);
+    central.setUint16(10,0,true);
+    central.setUint16(12,dosTime,true);
+    central.setUint16(14,dosDate,true);
+    central.setUint32(16,crc,true);
+    central.setUint32(20,size,true);
+    central.setUint32(24,size,true);
+    central.setUint16(28,nameBytes.length,true);
+    central.setUint16(30,0,true);
+    central.setUint16(32,0,true);
+    central.setUint16(34,0,true);
+    central.setUint16(36,0,true);
+    central.setUint32(38,0,true);
+    central.setUint32(42,offset,true);
+    centralParts.push(new Uint8Array(central.buffer),nameBytes);
+
+    offset += 30 + nameBytes.length + size;
+  });
+
+  const centralSize = centralParts.reduce((s,p)=>s+p.length,0);
+  const centralOffset = offset;
+
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0,0x06054b50,true);
+  end.setUint16(4,0,true);
+  end.setUint16(6,0,true);
+  end.setUint16(8,files.length,true);
+  end.setUint16(10,files.length,true);
+  end.setUint32(12,centralSize,true);
+  end.setUint32(16,centralOffset,true);
+  end.setUint16(20,0,true);
+
+  return new Blob([...localParts,...centralParts,new Uint8Array(end.buffer)],{type:'application/zip'});
+}
+
+const ALL_ASSETS = [...PROFILE_ASSETS, ...BANNER_ASSETS];
+
+const downloadAllBtn = document.getElementById('downloadAllBtn');
+downloadAllBtn.addEventListener('click', async ()=>{
+  downloadAllBtn.disabled = true;
+  const original = downloadAllBtn.textContent;
+  downloadAllBtn.textContent = 'Zipping…';
+  try{
+    const files = [];
+    for(const asset of ALL_ASSETS){
+      const canvas = document.getElementById(asset.id);
+      const blob = await canvasBlob(canvas);
+      const buf = await blob.arrayBuffer();
+      files.push({name:asset.filename,data:buf});
+    }
+    const zipBlob = buildZip(files);
+    triggerDownload(zipBlob,'sui-brand-assets.zip');
+  } finally {
+    downloadAllBtn.disabled = false;
+    downloadAllBtn.textContent = original;
+  }
+});
+
+/* ===================== render, with font-ready re-render to avoid fallback-font metrics ===================== */
+renderAll();
+if(document.fonts && document.fonts.ready){
+  Promise.all([
+    document.fonts.load('800 100px Sora'),
+    document.fonts.load('700 100px Sora'),
+    document.fonts.load('600 27px Inter'),
+    document.fonts.load('500 20px Inter'),
+  ]).then(()=>document.fonts.ready).then(renderAll).catch(renderAll);
+}
+window.addEventListener('load',renderAll);
+</script>
+</body>
+</html>
