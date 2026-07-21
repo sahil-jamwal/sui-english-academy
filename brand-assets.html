@@ -545,6 +545,7 @@ function positionOverlays(){
 }
 
 function renderAll(){
+  renderIconPreviews();
   PROFILE_ASSETS.forEach(a=>renderProfile(a.id,a.size));
   BANNER_ASSETS.forEach(a=>{
     if(a.mode==='simple') renderSimpleBanner(a);
