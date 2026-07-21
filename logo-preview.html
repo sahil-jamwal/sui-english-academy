@@ -136,7 +136,43 @@ function wireReplay(root){
 let uidCounter = 0;
 function uid(){ return 'u'+(uidCounter++); }
 
-/* ---------- bars + paper plane builder (full logo concept, unchanged) ---------- */
+/* ---------- premium highlight overlays (applied on top of finished bars) ----------
+   'gloss'   — one diagonal glass-sheen streak across all bars, like a glass/enamel badge.
+   'topedge' — a small bright cap at the top of each bar, like a rounded 3D bezel catching light.
+   Both fade in AFTER the bars finish rising, so there's no mismatch with the grow animation. */
+function glossSheenOverlay(bars, barW, viewW, viewH, id, delay){
+  const clipId = id+'-sheenclip', gradId = id+'-sheengrad';
+  const clipRects = bars.map(b=>`<rect x="${b.x}" y="${b.y}" width="${barW}" height="${b.h}" rx="${barW/2}"/>`).join('');
+  return `
+    <clipPath id="${clipId}">${clipRects}</clipPath>
+    <linearGradient id="${gradId}" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".4" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".52" stop-color="#fff" stop-opacity=".65"/>
+      <stop offset=".64" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect clip-path="url(#${clipId})" x="0" y="0" width="${viewW}" height="${viewH}" fill="url(#${gradId})" opacity="0">
+    <animate attributeName="opacity" from="0" to="1" dur=".5s" begin="indefinite" fill="freeze" data-delay="${delay}"/>
+  </rect><g style="display:none"><defs>`;
+}
+function topEdgeOverlay(bars, barW, delay){
+  return bars.map((b,i)=>{
+    const capH = Math.min(b.h*0.32, 7);
+    return `<rect x="${b.x+1.3}" y="${b.y+1.3}" width="${barW-2.6}" height="${capH}" rx="${(barW-2.6)/2}" fill="#fff" opacity="0">
+      <animate attributeName="opacity" from="0" to=".4" dur=".4s" begin="indefinite" fill="freeze" data-delay="${delay+i*40}"/>
+    </rect>`;
+  }).join('');
+}
+// wraps either overlay so callers don't need to know the plumbing details above
+function highlightMarkup(style, bars, barW, viewW, viewH, id, delay){
+  if(style==='gloss') return `<defs>${glossSheenOverlay(bars,barW,viewW,viewH,id,delay).replace('</defs>\n  <rect','#SPLIT#<rect').split('#SPLIT#')[0].replace('<defs>','')}</defs>` + glossSheenOverlay(bars,barW,viewW,viewH,id,delay).split('</defs>')[1].split('<g style="display:none">')[0];
+  if(style==='topedge') return `<g>${topEdgeOverlay(bars,barW,delay)}</g>`;
+  return '';
+}
+
+/* ---------- bars + paper plane builder (full logo concept) ---------- */
 function barsPlaneSVG(cfg){
   const id = uid();
   const gradId = id+'-lg', maskId = id+'-mask';
@@ -156,10 +192,27 @@ function barsPlaneSVG(cfg){
       <animate attributeName="height" from="0" to="${b.h}" dur=".5s" begin="indefinite" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".22,1,.36,1" values="0;${b.h}" data-delay="${b.d}"/>
       <animate attributeName="y" from="74" to="${b.y}" dur=".5s" begin="indefinite" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".22,1,.36,1" values="74;${b.y}" data-delay="${b.d}"/>
     </rect>`).join('');
+  let highlightDefs = '', highlightGloss = '', highlightCaps = '';
+  if(cfg.highlight==='gloss'){
+    const clipId = id+'-sc', gradId2 = id+'-sg';
+    highlightDefs = `<clipPath id="${clipId}">${bars.map(b=>`<rect x="${b.x}" y="${b.y}" width="11" height="${b.h}" rx="5.5"/>`).join('')}</clipPath>
+      <linearGradient id="${gradId2}" x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".4" stop-color="#fff" stop-opacity="0"/>
+        <stop offset=".52" stop-color="#fff" stop-opacity=".65"/><stop offset=".64" stop-color="#fff" stop-opacity="0"/>
+        <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+      </linearGradient>`;
+    highlightGloss = `<rect clip-path="url(#${clipId})" x="0" y="0" width="64" height="80" fill="url(#${gradId2})" opacity="0">
+      <animate attributeName="opacity" from="0" to="1" dur=".5s" begin="indefinite" fill="freeze" data-delay="550"/>
+    </rect>`;
+  }
+  if(cfg.highlight==='topedge'){
+    highlightCaps = topEdgeOverlay(bars, 11, 550);
+  }
   return `
   <svg class="anim-logo" width="52" height="65" viewBox="0 0 64 80" xmlns="http://www.w3.org/2000/svg" aria-label="SUI logo mark">
     <defs>
       ${defsExtra}
+      ${highlightDefs}
       <mask id="${maskId}" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="80">
         <rect x="0" y="0" width="64" height="80" fill="#000"/>
         <path d="M8,46 Q30,2 54,14" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1">
@@ -168,6 +221,8 @@ function barsPlaneSVG(cfg){
       </mask>
     </defs>
     <g>${barsMarkup}</g>
+    ${highlightGloss}
+    <g>${highlightCaps}</g>
     <path d="M8,46 Q30,2 54,14" fill="none" stroke="${cfg.plane}" stroke-width="2" stroke-linecap="round" stroke-dasharray="1.6 4.2" mask="url(#${maskId})"/>
     <g>
       <path d="M-6,-3.5 L7,0 L-6,3.5 L-3,0 Z" fill="${cfg.plane}"/>
