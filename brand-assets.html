@@ -654,6 +654,7 @@ function positionOverlays(){
 }
 
 function renderAll(){
+  renderConfirmedWhatsapp();
   renderIconPreviews();
   PROFILE_ASSETS.forEach(a=>renderProfile(a.id,a.size));
   BANNER_ASSETS.forEach(a=>{
