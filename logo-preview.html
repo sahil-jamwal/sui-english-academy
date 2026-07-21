@@ -237,9 +237,11 @@ function iconMarkSVG(cfg, sizePx){
       <animate attributeName="y" from="60" to="${b.y}" dur=".42s" begin="indefinite" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".22,1,.36,1" values="60;${b.y}" data-delay="${b.d}"/>
     </rect>`).join('');
   const planeMarkup = cfg.showPlane ? `
-    <g transform="translate(56,10) rotate(30) scale(0)">
-      <path d="M-8,-4.5 L9,0 L-8,4.5 L-4,0 Z" fill="${cfg.plane}"/>
-      <animateTransform attributeName="transform" type="scale" additive="sum" from="0" to="1" begin="indefinite" dur=".4s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".34,1.4,.4,1" values="0;1" data-delay="420"/>
+    <g transform="translate(56,10) rotate(30)">
+      <g transform="scale(0)">
+        <path d="M-8,-4.5 L9,0 L-8,4.5 L-4,0 Z" fill="${cfg.plane}"/>
+        <animateTransform attributeName="transform" type="scale" from="0" to="1" begin="indefinite" dur=".4s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".34,1.4,.4,1" values="0;1" data-delay="420"/>
+      </g>
     </g>` : '';
   const glowFilter = cfg.glow ? `filter="drop-shadow(0 0 ${Math.max(2,sizePx*0.045)}px ${cfg.plane}aa)"` : '';
   return `
