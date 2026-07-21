@@ -635,11 +635,42 @@ document.getElementById('p5Exports').innerHTML = P5_EXPORTS.map(g => `
         </div>
         <div class="export-name">${f.file}</div>
         <div class="export-meta">${f.label} &middot; ${f.hint}</div>
-        <a class="export-dl" href="exports/${f.file}" download="${f.file}">Download</a>
+        <button class="export-dl" data-file="exports/${f.file}" data-filename="${f.file}">Download</button>
       </div>
     `).join('')}
   </div>
 `).join('');
+
+/* ---------- forced-download helper (Blob + object URL + synthetic <a click>) ---------- */
+function triggerDownload(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+document.getElementById('p5Exports').addEventListener('click', async e=>{
+  const btn = e.target.closest('button[data-file]');
+  if(!btn) return;
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Downloading…';
+  try{
+    const res = await fetch(btn.dataset.file);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const blob = await res.blob();
+    triggerDownload(blob, btn.dataset.filename);
+  } catch(err){
+    alert('Download failed: '+err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+});
 </script>
 </body>
 </html>
