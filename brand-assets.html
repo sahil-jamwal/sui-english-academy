@@ -705,115 +705,72 @@ document.addEventListener('click', e=>{
   downloadCanvas(canvas, btn.dataset.filename);
 });
 
-/* ---- minimal, dependency-free ZIP writer (stored/no-compression — PNGs are already compressed) ---- */
-const CRC_TABLE = (()=>{
-  const table = new Uint32Array(256);
-  for(let n=0;n<256;n++){
-    let c=n;
-    for(let k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1);
-    table[n]=c>>>0;
-  }
-  return table;
-})();
-
-function crc32(bytes){
-  let crc = 0xFFFFFFFF;
-  for(let i=0;i<bytes.length;i++) crc = (crc>>>8) ^ CRC_TABLE[(crc ^ bytes[i]) & 0xFF];
-  return (crc ^ 0xFFFFFFFF) >>> 0;
-}
-
-function toDosDateTime(date){
-  const dosTime = ((date.getHours()&0x1F)<<11) | ((date.getMinutes()&0x3F)<<5) | ((date.getSeconds()>>1)&0x1F);
-  const dosDate = (((date.getFullYear()-1980)&0x7F)<<9) | (((date.getMonth()+1)&0xF)<<5) | (date.getDate()&0x1F);
-  return {dosTime,dosDate};
-}
-
-function buildZip(files){
-  const encoder = new TextEncoder();
-  const localParts = [];
-  const centralParts = [];
-  let offset = 0;
-  const {dosTime,dosDate} = toDosDateTime(new Date());
-
-  files.forEach(f=>{
-    const nameBytes = encoder.encode(f.name);
-    const data = new Uint8Array(f.data);
-    const crc = crc32(data);
-    const size = data.length;
-
-    const local = new DataView(new ArrayBuffer(30));
-    local.setUint32(0,0x04034b50,true);
-    local.setUint16(4,20,true);
-    local.setUint16(6,0,true);
-    local.setUint16(8,0,true);
-    local.setUint16(10,dosTime,true);
-    local.setUint16(12,dosDate,true);
-    local.setUint32(14,crc,true);
-    local.setUint32(18,size,true);
-    local.setUint32(22,size,true);
-    local.setUint16(26,nameBytes.length,true);
-    local.setUint16(28,0,true);
-    localParts.push(new Uint8Array(local.buffer),nameBytes,data);
-
-    const central = new DataView(new ArrayBuffer(46));
-    central.setUint32(0,0x02014b50,true);
-    central.setUint16(4,20,true);
-    central.setUint16(6,20,true);
-    central.setUint16(8,0,true);
-    central.setUint16(10,0,true);
-    central.setUint16(12,dosTime,true);
-    central.setUint16(14,dosDate,true);
-    central.setUint32(16,crc,true);
-    central.setUint32(20,size,true);
-    central.setUint32(24,size,true);
-    central.setUint16(28,nameBytes.length,true);
-    central.setUint16(30,0,true);
-    central.setUint16(32,0,true);
-    central.setUint16(34,0,true);
-    central.setUint16(36,0,true);
-    central.setUint32(38,0,true);
-    central.setUint32(42,offset,true);
-    centralParts.push(new Uint8Array(central.buffer),nameBytes);
-
-    offset += 30 + nameBytes.length + size;
-  });
-
-  const centralSize = centralParts.reduce((s,p)=>s+p.length,0);
-  const centralOffset = offset;
-
-  const end = new DataView(new ArrayBuffer(22));
-  end.setUint32(0,0x06054b50,true);
-  end.setUint16(4,0,true);
-  end.setUint16(6,0,true);
-  end.setUint16(8,files.length,true);
-  end.setUint16(10,files.length,true);
-  end.setUint32(12,centralSize,true);
-  end.setUint32(16,centralOffset,true);
-  end.setUint16(20,0,true);
-
-  return new Blob([...localParts,...centralParts,new Uint8Array(end.buffer)],{type:'application/zip'});
-}
+/* ---- P5 logo exports (already-rendered static PNGs in /exports, bundled into the ZIP too) ---- */
+const P5_ASSETS = [
+  { url:'exports/sui-p5-icon-2160.png', filename:'sui-p5-icon-2160.png' },
+  { url:'exports/sui-p5-icon-1080.png', filename:'sui-p5-icon-1080.png' },
+  { url:'exports/sui-p5-icon-800.png',  filename:'sui-p5-icon-800.png' },
+  { url:'exports/sui-p5-icon-640.png',  filename:'sui-p5-icon-640.png' },
+  { url:'exports/sui-p5-icon-512.png',  filename:'sui-p5-icon-512.png' },
+  { url:'exports/sui-p5-full-2160.png', filename:'sui-p5-full-2160.png' },
+  { url:'exports/sui-p5-full-1080.png', filename:'sui-p5-full-1080.png' },
+];
 
 const ALL_ASSETS = [...PROFILE_ASSETS, ...BANNER_ASSETS];
 
 const downloadAllBtn = document.getElementById('downloadAllBtn');
+const zipProgress = document.getElementById('zipProgress');
+const zipProgressFill = document.getElementById('zipProgressFill');
+const zipProgressLabel = document.getElementById('zipProgressLabel');
+
+function setZipProgress(pct, label){
+  zipProgressFill.style.width = Math.max(0,Math.min(100,pct))+'%';
+  zipProgressLabel.textContent = label;
+}
+
 downloadAllBtn.addEventListener('click', async ()=>{
   downloadAllBtn.disabled = true;
   const original = downloadAllBtn.textContent;
-  downloadAllBtn.textContent = 'Zipping…';
+  zipProgress.hidden = false;
+  setZipProgress(0,'Preparing…');
   try{
-    const files = [];
+    const zip = new JSZip();
+    const total = ALL_ASSETS.length + P5_ASSETS.length;
+    let done = 0;
+
+    downloadAllBtn.textContent = 'Rendering…';
     for(const asset of ALL_ASSETS){
       const canvas = document.getElementById(asset.id);
       const blob = await canvasBlob(canvas);
-      const buf = await blob.arrayBuffer();
-      files.push({name:asset.filename,data:buf});
+      zip.file(asset.filename, blob);
+      done++;
+      setZipProgress(done/total*45, `Rendering brand assets… (${done}/${total})`);
     }
-    const zipBlob = buildZip(files);
+
+    downloadAllBtn.textContent = 'Collecting…';
+    for(const asset of P5_ASSETS){
+      const res = await fetch(asset.url);
+      if(!res.ok) throw new Error(`Could not load ${asset.url} (HTTP ${res.status})`);
+      const blob = await res.blob();
+      zip.file(asset.filename, blob);
+      done++;
+      setZipProgress(45 + (done/total*15), `Collecting logo exports… (${done}/${total})`);
+    }
+
+    downloadAllBtn.textContent = 'Zipping…';
+    const zipBlob = await zip.generateAsync(
+      {type:'blob', compression:'DEFLATE', compressionOptions:{level:6}},
+      meta => setZipProgress(60 + meta.percent*0.4, `Zipping… ${Math.round(meta.percent)}%`)
+    );
+
+    setZipProgress(100,'Starting download…');
     triggerDownload(zipBlob,'sui-brand-assets.zip');
+  } catch(err){
+    alert('ZIP build failed: '+err.message);
   } finally {
     downloadAllBtn.disabled = false;
     downloadAllBtn.textContent = original;
+    setTimeout(()=>{ zipProgress.hidden = true; setZipProgress(0,''); }, 1400);
   }
 });
 
