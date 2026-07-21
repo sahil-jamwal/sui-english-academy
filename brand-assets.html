@@ -501,6 +501,8 @@ const BANNER_ASSETS = [
 ];
 
 /* ===================== build the page markup ===================== */
+buildIconPreviewMarkup();
+
 const profileGrid = document.getElementById('profileGrid');
 profileGrid.innerHTML = PROFILE_ASSETS.map(a=>`
   <div class="card">
