@@ -348,8 +348,13 @@ function iconMarkSVG(cfg, sizePx){
     {x:4,w:12,h:20,y:36,d:0},{x:20,w:12,h:30,y:26,d:70},
     {x:36,w:12,h:40,y:16,d:140},{x:52,w:12,h:50,y:6,d:210}
   ];
+  const hl = cfg.highlight
+    ? highlightParts(cfg.highlight, bars, 12, cfg.barGrad?.[0], cfg.barGrad?.[1], 60, 64, 64, cfg.plane, id, 260)
+    : NOOP_HL;
   let defsExtra = '', fills;
-  if(cfg.barGrad){
+  if(hl.barFillOverride){
+    fills = bars.map(()=>hl.barFillOverride);
+  } else if(cfg.barGrad){
     defsExtra = `<linearGradient id="${gradId}" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="${cfg.barGrad[0]}"/><stop offset="1" stop-color="${cfg.barGrad[1]}"/></linearGradient>`;
     fills = bars.map(()=>`url(#${gradId})`);
   } else {
@@ -368,12 +373,12 @@ function iconMarkSVG(cfg, sizePx){
       </g>
     </g>` : '';
   const glowFilter = cfg.glow ? `filter="drop-shadow(0 0 ${Math.max(2,sizePx*0.045)}px ${cfg.plane}aa)"` : '';
-  const hl = highlightParts(cfg.highlight, bars, 12, 64, 64, id, 260);
   return `
   <svg class="anim-logo" width="${sizePx}" height="${sizePx}" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-label="SUI icon mark" ${glowFilter}>
     <defs>${defsExtra}${hl.defs}</defs>
+    ${hl.before}
     <g>${barsMarkup}</g>
-    ${hl.overlay}
+    ${hl.after}
     ${planeMarkup}
   </svg>`;
 }
