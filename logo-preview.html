@@ -609,6 +609,37 @@ document.getElementById('altConcepts').innerHTML = ALT_CONCEPTS.map(c=>`
 `).join('');
 
 wireReplay(document);
+
+/* ---------- P5 Exports section ---------- */
+const P5_EXPORTS = [
+  { group:'Icon-only (bars + trail + plane)', files:[
+    { file:'sui-p5-icon-2160.png', size:2160, label:'2160×2160', hint:'master' },
+    { file:'sui-p5-icon-1080.png', size:1080, label:'1080×1080', hint:'Instagram' },
+    { file:'sui-p5-icon-800.png',  size:800,  label:'800×800',   hint:'YouTube' },
+    { file:'sui-p5-icon-640.png',  size:640,  label:'640×640',   hint:'WhatsApp' },
+    { file:'sui-p5-icon-512.png',  size:512,  label:'512×512',   hint:'Telegram' },
+  ]},
+  { group:'Full lockup (mark + SUI + English Academy)', files:[
+    { file:'sui-p5-full-2160.png', size:2160, label:'2160×2160', hint:'master' },
+    { file:'sui-p5-full-1080.png', size:1080, label:'1080×1080', hint:'Instagram' },
+  ]},
+];
+
+document.getElementById('p5Exports').innerHTML = P5_EXPORTS.map(g => `
+  <div class="export-subhead">${g.group}</div>
+  <div class="export-grid">
+    ${g.files.map(f => `
+      <div class="export-card">
+        <div class="export-thumb" style="aspect-ratio:1/1">
+          <img src="exports/${f.file}" alt="${f.file}" loading="lazy">
+        </div>
+        <div class="export-name">${f.file}</div>
+        <div class="export-meta">${f.label} &middot; ${f.hint}</div>
+        <a class="export-dl" href="exports/${f.file}" download="${f.file}">Download</a>
+      </div>
+    `).join('')}
+  </div>
+`).join('');
 </script>
 </body>
 </html>
