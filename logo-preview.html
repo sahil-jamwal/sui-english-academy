@@ -259,9 +259,14 @@ function barsPlaneSVG(cfg){
   const bars = [
     {x:2,h:22,y:52,d:0},{x:18,h:32,y:42,d:80},{x:34,h:44,y:30,d:160},{x:50,h:54,y:20,d:240}
   ];
+  const hl = cfg.highlight
+    ? highlightParts(cfg.highlight, bars, 11, cfg.barGrad?.[0], cfg.barGrad?.[1], 74, 64, 80, cfg.plane, id, 550)
+    : NOOP_HL;
   let defsExtra = '';
   let fills;
-  if(cfg.barGrad){
+  if(hl.barFillOverride){
+    fills = bars.map(()=>hl.barFillOverride);
+  } else if(cfg.barGrad){
     defsExtra = `<linearGradient id="${gradId}" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="${cfg.barGrad[0]}"/><stop offset="1" stop-color="${cfg.barGrad[1]}"/></linearGradient>`;
     fills = bars.map(()=>`url(#${gradId})`);
   } else {
@@ -272,7 +277,6 @@ function barsPlaneSVG(cfg){
       <animate attributeName="height" from="0" to="${b.h}" dur=".5s" begin="indefinite" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".22,1,.36,1" values="0;${b.h}" data-delay="${b.d}"/>
       <animate attributeName="y" from="74" to="${b.y}" dur=".5s" begin="indefinite" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".22,1,.36,1" values="74;${b.y}" data-delay="${b.d}"/>
     </rect>`).join('');
-  const hl = highlightParts(cfg.highlight, bars, 11, 64, 80, id, 550);
   return `
   <svg class="anim-logo" width="52" height="65" viewBox="0 0 64 80" xmlns="http://www.w3.org/2000/svg" aria-label="SUI logo mark">
     <defs>
@@ -285,8 +289,9 @@ function barsPlaneSVG(cfg){
         </path>
       </mask>
     </defs>
+    ${hl.before}
     <g>${barsMarkup}</g>
-    ${hl.overlay}
+    ${hl.after}
     <path d="M8,46 Q30,2 54,14" fill="none" stroke="${cfg.plane}" stroke-width="2" stroke-linecap="round" stroke-dasharray="1.6 4.2" mask="url(#${maskId})"/>
     <g>
       <path d="M-6,-3.5 L7,0 L-6,3.5 L-3,0 Z" fill="${cfg.plane}"/>
