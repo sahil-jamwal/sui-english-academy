@@ -353,6 +353,99 @@ function renderIconPreviews(){
   });
 }
 
+/* =====================================================================
+   CONFIRMED PICK — Indigo Glow background/trail + P5 Rim-Light Jewel
+   Tone bars. Deliberately a standalone function (not reusing drawMark/
+   paintBackdrop above) since the geometry — padded bars, rounded-square
+   frame, per-bar rim stroke — is specific to this exact approved design.
+===================================================================== */
+function paintIndigoGlowFrame(ctx,size){
+  ctx.save();
+  roundRectClip(ctx,0,0,size,size,size*0.22);
+
+  const base = ctx.createRadialGradient(size*0.75,size*-0.1,0, size*0.75,size*-0.1,size*1.2);
+  base.addColorStop(0,'#4A3F86'); base.addColorStop(0.72,'#150F2C'); base.addColorStop(1,'#150F2C');
+  ctx.fillStyle = base; ctx.fillRect(0,0,size,size);
+
+  const hl = ctx.createRadialGradient(size*0.3,size*0.14,0, size*0.3,size*0.14,size*0.5);
+  hl.addColorStop(0,'rgba(255,255,255,.14)'); hl.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle = hl; ctx.fillRect(0,0,size,size);
+
+  const sh = ctx.createLinearGradient(0,size*0.52,0,size);
+  sh.addColorStop(0,'rgba(0,0,0,0)'); sh.addColorStop(1,'rgba(0,0,0,.4)');
+  ctx.fillStyle = sh; ctx.fillRect(0,0,size,size);
+  ctx.restore();
+}
+
+// bars sit inside a 12.5%-per-side safe margin (8 of 64 units) — the first cut had the
+// tallest bar touching the canvas edge exactly, which read as cropped/zoomed in
+const CONFIRMED_BARS = [
+  {x:8,  w:9, h:12, y:56-12},
+  {x:21, w:9, h:19, y:56-19},
+  {x:34, w:9, h:26, y:56-26},
+  {x:47, w:9, h:33, y:56-33},
+];
+const CONFIRMED_TRAIL = 'M14,44 Q30,10 50,16';
+
+function drawConfirmedMark(ctx,size){
+  const scale = size/64;
+  ctx.save();
+  ctx.scale(scale,scale);
+
+  ctx.save();
+  ctx.strokeStyle = '#FFD666';
+  ctx.lineWidth = 1.4;
+  ctx.lineCap = 'round';
+  ctx.setLineDash([1.2,3.2]);
+  ctx.globalAlpha = .95;
+  ctx.beginPath();
+  ctx.moveTo(14,44);
+  ctx.quadraticCurveTo(30,10,50,16);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // each bar gets its OWN gradient across its own box (matches the approved SVG preview,
+  // rather than one gradient shared across the whole mark) so every bar — short or tall —
+  // shows the full amber -> hot-orange -> gold range, not just the tallest one
+  CONFIRMED_BARS.forEach(b=>{
+    const g = ctx.createLinearGradient(b.x, b.y+b.h, b.x+b.w, b.y);
+    g.addColorStop(0,'#7A3B0A'); g.addColorStop(.4,'#DE7A12'); g.addColorStop(.72,'#FFB020'); g.addColorStop(1,'#FFE18A');
+    ctx.fillStyle = g;
+    roundRectPath(ctx,b.x,b.y,b.w,b.h,4.5);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,246,222,.85)';
+    ctx.lineWidth = 1;
+    roundRectPath(ctx,b.x,b.y,b.w,b.h,4.5);
+    ctx.stroke();
+  });
+
+  ctx.save();
+  ctx.translate(50,16);
+  ctx.rotate(26*Math.PI/180);
+  ctx.shadowColor = '#FFD666';
+  ctx.shadowBlur = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-6,-3.5); ctx.lineTo(7,0); ctx.lineTo(-6,3.5); ctx.lineTo(-3,0); ctx.closePath();
+  ctx.fillStyle = '#FFD666';
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function renderConfirmedWhatsapp(){
+  const canvas = document.getElementById('cv-wa-confirmed');
+  if(!canvas) return;
+  const size = 640;
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,size,size);
+  paintIndigoGlowFrame(ctx,size);
+  drawConfirmedMark(ctx,size);
+}
+
 function drawLetterSpaced(ctx,text,x,y,spacing){
   let cx = x;
   for(const ch of text){
