@@ -433,11 +433,14 @@ document.getElementById('iconVariants').innerHTML = ICON_VARIANTS.map(v=>`
   </div>
 `).join('');
 
-/* ---------- Premium Highlight Options — H1 Glass Sheen / H2 Top-Edge 3D,
+/* ---------- Premium Treatments v2 — five genuinely different techniques,
    tried on both the full trail logo and Icon 1 ---------- */
 const HIGHLIGHT_STYLES = [
-  { key:'gloss', label:'H1 — Glass Sheen', tag:'One diagonal streak of light across all the bars, like a glass or enamel badge.' },
-  { key:'topedge', label:'H2 — Top-Edge 3D', tag:'A bright cap at the top of each bar, like a rounded bezel catching light.' },
+  { key:'foil', label:'P1 — Metallic Foil', tag:'A real multi-band gradient woven through the bars (dark → gold → hot white band → gold → dark), like brushed gold foil, plus a small crisp glint. This is baked into the fill itself, not a translucent layer on top.' },
+  { key:'castshadow', label:'P2 — Cast Shadow', tag:'Punchier, more vivid gradient + a real soft contact shadow grounding the bars — the "floating die-cast object under a light" look modern app icons use.' },
+  { key:'bevel', label:'P3 — Chrome Bevel', tag:'A bright wedge in the top-left of each bar, a dark wedge in the bottom-right — reads as extruded 3D metal instead of a flat painted shape.' },
+  { key:'burst', label:'P4 — Radiant Burst', tag:'Light rays fan out from behind the mark, like a premium spotlight or badge. The bars stay simple; the drama comes from what\'s behind them.' },
+  { key:'rimlight', label:'P5 — Rim-Light Jewel Tone', tag:'A richer amber → hot-orange → gold gradient (real color range, not just light/dark of one hue) plus a bright rim stroke outlining every bar, like product-photography rim lighting.' },
 ];
 const fullLogoBase = BARS_VARIANTS[0]; // Gold & Black — matches the screenshot
 const iconBase = ICON_VARIANTS[0]; // Gold Blaze — closest icon equivalent
