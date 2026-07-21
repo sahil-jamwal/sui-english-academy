@@ -145,37 +145,111 @@ function wireReplay(root){
 let uidCounter = 0;
 function uid(){ return 'u'+(uidCounter++); }
 
-/* ---------- premium highlight overlays (applied on top of finished bars) ----------
-   'gloss'   — one diagonal glass-sheen streak across all bars, like a glass/enamel badge.
-   'topedge' — a small bright cap at the top of each bar, like a rounded 3D bezel catching light.
-   Both fade in AFTER the bars finish rising, so there's no mismatch with the grow animation.
-   Returns {defs, overlay} — defs go inside <defs>, overlay is drawn after the bars group. */
-function glossSheenParts(bars, barW, viewW, viewH, id, delay){
-  const clipId = id+'-sc', gradId = id+'-sg';
-  const defs = `<clipPath id="${clipId}">${bars.map(b=>`<rect x="${b.x}" y="${b.y}" width="${barW}" height="${b.h}" rx="${barW/2}"/>`).join('')}</clipPath>
-    <linearGradient id="${gradId}" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".4" stop-color="#fff" stop-opacity="0"/>
-      <stop offset=".52" stop-color="#fff" stop-opacity=".65"/><stop offset=".64" stop-color="#fff" stop-opacity="0"/>
-      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+/* ================================================================
+   PREMIUM TREATMENTS v2 — five genuinely different techniques, not
+   variations on the same soft overlay. Each returns
+   {defs, before, after, barFillOverride}:
+     defs             → spliced into <defs>
+     before           → drawn BEFORE the bars group (backdrops/shadows)
+     after             → drawn AFTER the bars group (glints/strokes/bevels)
+     barFillOverride  → if set, REPLACES the bars' own gradient entirely
+================================================================= */
+function mixHex(hexA, hexB, t){
+  const a = hexA.replace('#','').match(/.{2}/g).map(h=>parseInt(h,16));
+  const b = hexB.replace('#','').match(/.{2}/g).map(h=>parseInt(h,16));
+  return '#'+a.map((v,i)=>Math.round(v+(b[i]-v)*t).toString(16).padStart(2,'0')).join('');
+}
+const NOOP_HL = {defs:'', before:'', after:'', barFillOverride:null};
+
+// 1. METALLIC FOIL — a real multi-band gradient (dark→gold→hot white band→gold→dark)
+// baked into the bar fill itself, like brushed gold foil, plus a small crisp glint.
+function foilHL(bars, barW, darkC, lightC, id, delay){
+  const gradId = id+'-foil';
+  const dl = mixHex(darkC, lightC, .55);
+  const stops = [[0,darkC],[.22,dl],[.42,lightC],[.5,'#FFFBEF'],[.58,lightC],[.8,dl],[1,darkC]];
+  const defs = `<linearGradient id="${gradId}" x1="0" y1="1" x2="1" y2="0">${stops.map(([o,c])=>`<stop offset="${o}" stop-color="${c}"/>`).join('')}</linearGradient>`;
+  const tb = bars[bars.length-1];
+  const sx = tb.x + barW*0.55, sy = tb.y - 6;
+  const after = `<g transform="translate(${sx},${sy})"><g transform="scale(0)">
+    <path d="M0,-6 L1.7,-1.7 L6,0 L1.7,1.7 L0,6 L-1.7,1.7 L-6,0 L-1.7,-1.7 Z" fill="#FFFDF5"/>
+    <animateTransform attributeName="transform" type="scale" from="0" to="1" begin="indefinite" dur=".45s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".22,1,.36,1" values="0;1" data-delay="${delay}"/>
+  </g></g>`;
+  return {defs, before:'', after, barFillOverride:`url(#${gradId})`};
+}
+
+// 2. CAST SHADOW — vivid, punchier gradient + a real soft contact shadow grounding the bars,
+// like a die-cast/glossy plastic object sitting under a light (the classic "floating icon" look).
+function castShadowHL(bars, barW, darkC, lightC, baseline, id, delay){
+  const gradId = id+'-cs', shId = id+'-cssh';
+  const vivid = mixHex(lightC, '#FFFFFF', .12);
+  const stops = [[0,darkC],[1,vivid]];
+  const defs = `<linearGradient id="${gradId}" x1="0" y1="1" x2="1" y2="0">${stops.map(([o,c])=>`<stop offset="${o}" stop-color="${c}"/>`).join('')}</linearGradient>
+    <radialGradient id="${shId}" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#000" stop-opacity=".4"/><stop offset="65%" stop-color="#000" stop-opacity=".22"/><stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>`;
+  const spanX0 = bars[0].x, spanX1 = bars[bars.length-1].x+barW;
+  const cx = (spanX0+spanX1)/2 + 3, w = (spanX1-spanX0)+10;
+  const before = `<ellipse cx="${cx}" cy="${baseline+3}" rx="${w*0.58}" ry="${w*0.13}" fill="url(#${shId})" opacity="0">
+    <animate attributeName="opacity" from="0" to="1" dur=".4s" begin="indefinite" fill="freeze" data-delay="${delay}"/>
+  </ellipse>`;
+  return {defs, before, after:'', barFillOverride:`url(#${gradId})`};
+}
+
+// 3. CHROME BEVEL — a bright wedge in the top-left corner of each bar and a dark wedge in the
+// bottom-right, so the bars read as extruded/embossed 3D metal rather than a flat painted shape.
+function bevelHL(bars, barW, viewW, viewH, id, delay){
+  const clipId = id+'-bc', lightId = id+'-bl', darkId = id+'-bd';
+  const clipRects = bars.map(b=>`<rect x="${b.x}" y="${b.y}" width="${barW}" height="${b.h}" rx="${barW/2}"/>`).join('');
+  const defs = `<clipPath id="${clipId}">${clipRects}</clipPath>
+    <linearGradient id="${lightId}" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset=".38" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="${darkId}" x1="1" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#000" stop-opacity=".42"/><stop offset=".38" stop-color="#000" stop-opacity="0"/>
     </linearGradient>`;
-  const overlay = `<rect clip-path="url(#${clipId})" x="0" y="0" width="${viewW}" height="${viewH}" fill="url(#${gradId})" opacity="0">
-    <animate attributeName="opacity" from="0" to="1" dur=".5s" begin="indefinite" fill="freeze" data-delay="${delay}"/>
-  </rect>`;
-  return {defs, overlay};
+  const after = `<g clip-path="url(#${clipId})" opacity="0">
+    <rect x="0" y="0" width="${viewW}" height="${viewH}" fill="url(#${lightId})"/>
+    <rect x="0" y="0" width="${viewW}" height="${viewH}" fill="url(#${darkId})"/>
+    <animate attributeName="opacity" from="0" to="1" dur=".4s" begin="indefinite" fill="freeze" data-delay="${delay}"/>
+  </g>`;
+  return {defs, before:'', after, barFillOverride:null};
 }
-function topEdgeParts(bars, barW, delay){
-  const overlay = bars.map((b,i)=>{
-    const capH = Math.min(b.h*0.32, 7);
-    return `<rect x="${b.x+1.3}" y="${b.y+1.3}" width="${barW-2.6}" height="${capH}" rx="${(barW-2.6)/2}" fill="#fff" opacity="0">
-      <animate attributeName="opacity" from="0" to=".4" dur=".4s" begin="indefinite" fill="freeze" data-delay="${delay+i*40}"/>
-    </rect>`;
-  }).join('');
-  return {defs:'', overlay:`<g>${overlay}</g>`};
+
+// 4. RADIANT BURST — light rays fan out from behind the mark, like a premium spotlight/badge.
+// The bars stay simple; the drama comes from what's behind them.
+function burstHL(bars, barW, viewW, viewH, accent, id, delay){
+  const cx = (bars[0].x + bars[bars.length-1].x+barW)/2, cy = viewH*0.62;
+  const rayLen = viewW*0.62;
+  const rays = Array.from({length:10}).map((_,i)=>`<line x1="0" y1="0" x2="${rayLen}" y2="0" transform="rotate(${i*36})" stroke="${accent}" stroke-width="1.6" stroke-linecap="round" opacity=".26"/>`).join('');
+  const before = `<g transform="translate(${cx},${cy})"><g transform="scale(0)">
+    ${rays}
+    <animateTransform attributeName="transform" type="scale" from="0" to="1" begin="indefinite" dur=".6s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".22,1,.36,1" values="0;1" data-delay="${delay}"/>
+  </g></g>`;
+  return {defs:'', before, after:'', barFillOverride:null};
 }
-function highlightParts(style, bars, barW, viewW, viewH, id, delay){
-  if(style==='gloss') return glossSheenParts(bars, barW, viewW, viewH, id, delay);
-  if(style==='topedge') return topEdgeParts(bars, barW, delay);
-  return {defs:'', overlay:''};
+
+// 5. RIM-LIGHT JEWEL TONE — a richer, more saturated amber→hot-orange→gold gradient (real color
+// range, not just light-to-dark of the same hue) plus a bright rim stroke outlining every bar,
+// like product-photography rim lighting.
+function rimlightHL(bars, barW, id, delay){
+  const gradId = id+'-rl';
+  const stops = [[0,'#7A3B0A'],[.4,'#DE7A12'],[.72,'#FFB020'],[1,'#FFE18A']];
+  const defs = `<linearGradient id="${gradId}" x1="0" y1="1" x2="1" y2="0">${stops.map(([o,c])=>`<stop offset="${o}" stop-color="${c}"/>`).join('')}</linearGradient>`;
+  const after = `<g>${bars.map((b,i)=>`<rect x="${b.x}" y="${b.y}" width="${barW}" height="${b.h}" rx="${barW/2}" fill="none" stroke="#FFF6DE" stroke-width="1.1" opacity="0">
+    <animate attributeName="opacity" from="0" to=".9" dur=".35s" begin="indefinite" fill="freeze" data-delay="${delay+i*30}"/>
+  </rect>`).join('')}</g>`;
+  return {defs, before:'', after, barFillOverride:`url(#${gradId})`};
+}
+
+function highlightParts(style, bars, barW, darkC, lightC, baseline, viewW, viewH, accent, id, delay){
+  switch(style){
+    case 'foil': return foilHL(bars, barW, darkC, lightC, id, delay);
+    case 'castshadow': return castShadowHL(bars, barW, darkC, lightC, baseline, id, delay);
+    case 'bevel': return bevelHL(bars, barW, viewW, viewH, id, delay);
+    case 'burst': return burstHL(bars, barW, viewW, viewH, accent, id, delay);
+    case 'rimlight': return rimlightHL(bars, barW, id, delay);
+    default: return NOOP_HL;
+  }
 }
 
 /* ---------- bars + paper plane builder (full logo concept) ---------- */
