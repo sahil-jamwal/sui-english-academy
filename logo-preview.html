@@ -349,6 +349,54 @@ document.getElementById('iconVariants').innerHTML = ICON_VARIANTS.map(v=>`
   </div>
 `).join('');
 
+/* ---------- Premium Highlight Options — H1 Glass Sheen / H2 Top-Edge 3D,
+   tried on both the full trail logo and Icon 1 ---------- */
+const HIGHLIGHT_STYLES = [
+  { key:'gloss', label:'H1 — Glass Sheen', tag:'One diagonal streak of light across all the bars, like a glass or enamel badge.' },
+  { key:'topedge', label:'H2 — Top-Edge 3D', tag:'A bright cap at the top of each bar, like a rounded bezel catching light.' },
+];
+const fullLogoBase = BARS_VARIANTS[0]; // Gold & Black — matches the screenshot
+const iconBase = ICON_VARIANTS[0]; // Gold Blaze — closest icon equivalent
+
+document.getElementById('highlightVariants').innerHTML = HIGHLIGHT_STYLES.map(hs=>`
+  <div class="variant-block">
+    <div class="variant-title"><h3>${hs.label}</h3></div>
+    <p class="variant-tag">${hs.tag}</p>
+    <div class="icon-subrow">
+      <div class="icon-subrow-lbl">On the Full Logo (Gold &amp; Black, with trail)</div>
+      <div class="tile-row">
+        ${tile('light', barsPlaneSVG({...fullLogoBase.light, highlight:hs.key})+wordmark(false, fullLogoBase.light.plane), `${hs.label} — Light`, 'hover / tap to replay')}
+        ${tile('dark', barsPlaneSVG({...fullLogoBase.dark, highlight:hs.key})+wordmark(true, fullLogoBase.dark.plane), `${hs.label} — Dark`, 'hover / tap to replay')}
+      </div>
+    </div>
+    <div class="icon-subrow">
+      <div class="icon-subrow-lbl">On Icon 1 — Gold Blaze</div>
+      <div class="icon-pair">
+        <div class="icon-page pg-light">
+          <div class="icon-size-col">
+            <div class="icon-frame" style="width:80px;height:80px;background:${iconBase.bg}">${iconMarkSVG({...iconBase, showPlane:true, highlight:hs.key}, 58)}</div>
+            <span class="icon-size-lbl">80px</span>
+          </div>
+          <div class="icon-size-col">
+            <div class="icon-frame" style="width:160px;height:160px;background:${iconBase.bg}">${iconMarkSVG({...iconBase, showPlane:true, highlight:hs.key}, 115)}</div>
+            <span class="icon-size-lbl">160px</span>
+          </div>
+        </div>
+        <div class="icon-page pg-dark">
+          <div class="icon-size-col">
+            <div class="icon-frame" style="width:80px;height:80px;background:${iconBase.bg}">${iconMarkSVG({...iconBase, showPlane:true, highlight:hs.key}, 58)}</div>
+            <span class="icon-size-lbl">80px</span>
+          </div>
+          <div class="icon-size-col">
+            <div class="icon-frame" style="width:160px;height:160px;background:${iconBase.bg}">${iconMarkSVG({...iconBase, showPlane:true, highlight:hs.key}, 115)}</div>
+            <span class="icon-size-lbl">160px</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`).join('');
+
 /* ---------- alternative concept builders ---------- */
 
 function bookToBubbleSVG(primary, accent){
