@@ -92,7 +92,13 @@ footer{margin-top:48px;font-size:.8rem;color:var(--muted)}
     </div>
   </div>
 
-  <button class="btn btn-all" id="downloadAllBtn">Download All 9 as ZIP</button>
+  <div class="all-zip-wrap">
+    <button class="btn btn-all" id="downloadAllBtn">Download All (ZIP)</button>
+    <div class="zip-progress" id="zipProgress" hidden>
+      <div class="zip-progress-bar"><div class="zip-progress-fill" id="zipProgressFill"></div></div>
+      <div class="zip-progress-label" id="zipProgressLabel">Preparing…</div>
+    </div>
+  </div>
 
   <h2 class="section-head">Icon Treatment Preview — pick before exporting</h2>
   <p class="section-sub">Real canvas renders (not SVG mock-ups) of the three app-icon-style treatments, at 40px / 80px / 160px so you can judge small-size punch the way you would an Instagram or PhonePe icon. The <b>Profile Pictures</b> section below still exports the current confirmed Gold &amp; Black treatment — say which icon number (and "bars + plane" or "bars only") you want, and it'll be updated to match.</p>
