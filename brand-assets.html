@@ -200,6 +200,143 @@ function drawMark(ctx,cx,cy,box,opts={}){
   ctx.restore();
 }
 
+/* ===================== app icon treatments (small-size, high-contrast) ===================== */
+const ICON_VARIANTS = [
+  { num:1, name:'Gold Blaze', tag:'Vibrant amber-to-gold background, deep ink mark — bold, warm, instantly visible.',
+    barGrad:['#241D30','#100D18'], plane:'#100D18', glow:false,
+    paintBg(ctx,size){
+      const g = ctx.createLinearGradient(0,0,size,size);
+      g.addColorStop(0,'#FFCB4D'); g.addColorStop(1,'#E8901A');
+      ctx.fillStyle = g; ctx.fillRect(0,0,size,size);
+      const hl = ctx.createRadialGradient(size*0.3,size*0.18,0, size*0.3,size*0.18,size*0.5);
+      hl.addColorStop(0,'rgba(255,255,255,.55)'); hl.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle = hl; ctx.fillRect(0,0,size,size);
+      const sh = ctx.createLinearGradient(0,size*0.55,0,size);
+      sh.addColorStop(0,'rgba(90,50,0,0)'); sh.addColorStop(1,'rgba(90,50,0,.30)');
+      ctx.fillStyle = sh; ctx.fillRect(0,0,size,size);
+    }
+  },
+  { num:2, name:'Indigo Glow', tag:'Deep indigo background, bright glowing gold mark that radiates.',
+    barGrad:['#FFE9AE','#FFC233'], plane:'#FFD666', glow:true,
+    paintBg(ctx,size){
+      const g = ctx.createRadialGradient(size*0.75,size*-0.1,0, size*0.75,size*-0.1,size*1.1);
+      g.addColorStop(0,'#4A3F86'); g.addColorStop(0.72,'#150F2C'); g.addColorStop(1,'#150F2C');
+      ctx.fillStyle = g; ctx.fillRect(0,0,size,size);
+      const hl = ctx.createRadialGradient(size*0.3,size*0.14,0, size*0.3,size*0.14,size*0.5);
+      hl.addColorStop(0,'rgba(255,255,255,.14)'); hl.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle = hl; ctx.fillRect(0,0,size,size);
+      const sh = ctx.createLinearGradient(0,size*0.52,0,size);
+      sh.addColorStop(0,'rgba(0,0,0,0)'); sh.addColorStop(1,'rgba(0,0,0,.4)');
+      ctx.fillStyle = sh; ctx.fillRect(0,0,size,size);
+    }
+  },
+  { num:3, name:'Clean Light', tag:'White background, saturated gold mark with a deep-ink accent — the high-key "Google" look.',
+    barGrad:['#F5A623','#C9790A'], plane:'#211C3D', glow:false,
+    paintBg(ctx,size){
+      const g = ctx.createLinearGradient(0,0,size*0.6,size);
+      g.addColorStop(0,'#FFFEFB'); g.addColorStop(1,'#F7EFE0');
+      ctx.fillStyle = g; ctx.fillRect(0,0,size,size);
+      const hl = ctx.createRadialGradient(size*0.3,size*0.14,0, size*0.3,size*0.14,size*0.55);
+      hl.addColorStop(0,'rgba(255,255,255,.9)'); hl.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle = hl; ctx.fillRect(0,0,size,size);
+      const sh = ctx.createLinearGradient(0,size*0.6,0,size);
+      sh.addColorStop(0,'rgba(80,60,20,0)'); sh.addColorStop(1,'rgba(80,60,20,.08)');
+      ctx.fillStyle = sh; ctx.fillRect(0,0,size,size);
+    }
+  },
+];
+
+function roundRectClip(ctx,x,y,w,h,r){
+  roundRectPath(ctx,x,y,w,h,r);
+  ctx.clip();
+}
+
+// bold staircase bars in a 64x64 square viewBox, thicker than the full-logo mark, no dotted trail
+function drawIconMark(ctx, size, variant, showPlane){
+  const scale = size/64;
+  ctx.save();
+  ctx.scale(scale,scale);
+
+  const barGrad = ctx.createLinearGradient(0,64,64,0);
+  barGrad.addColorStop(0,variant.barGrad[0]);
+  barGrad.addColorStop(1,variant.barGrad[1]);
+  ctx.fillStyle = barGrad;
+  [[4,36,12,20],[20,26,12,30],[36,16,12,40],[52,6,12,50]].forEach(([x,y,w,h])=>{
+    roundRectPath(ctx,x,y,w,h,6);
+    ctx.fill();
+  });
+
+  if(showPlane){
+    ctx.save();
+    if(variant.glow){
+      ctx.shadowColor = variant.plane;
+      ctx.shadowBlur = 6;
+    }
+    ctx.translate(56,10);
+    ctx.rotate(30 * Math.PI/180);
+    ctx.beginPath();
+    ctx.moveTo(-8,-4.5);
+    ctx.lineTo(9,0);
+    ctx.lineTo(-8,4.5);
+    ctx.lineTo(-4,0);
+    ctx.closePath();
+    ctx.fillStyle = variant.plane;
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function renderIconCanvas(canvas, size, variant, showPlane){
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,size,size);
+  ctx.save();
+  roundRectClip(ctx,0,0,size,size,size*0.22);
+  variant.paintBg(ctx,size);
+  ctx.restore();
+  drawIconMark(ctx, size, variant, showPlane);
+}
+
+const ICON_PREVIEW_SIZES = [40,80,160];
+
+function buildIconPreviewMarkup(){
+  const wrap = document.getElementById('iconPreview');
+  wrap.innerHTML = ICON_VARIANTS.map(v=>`
+    <div class="icon-block">
+      <h3>Icon ${v.num} — ${v.name}</h3>
+      <p class="tag">${v.tag}</p>
+      <div class="icon-subrow">
+        <div class="icon-subrow-lbl">Bars + Plane</div>
+        <div class="icon-pair">
+          <div class="icon-page pg-light">${ICON_PREVIEW_SIZES.map(s=>`<div class="icon-size-col"><canvas id="ic-${v.num}-plane-light-${s}" width="${s}" height="${s}"></canvas><span class="icon-size-lbl">${s}px</span></div>`).join('')}</div>
+          <div class="icon-page pg-dark">${ICON_PREVIEW_SIZES.map(s=>`<div class="icon-size-col"><canvas id="ic-${v.num}-plane-dark-${s}" width="${s}" height="${s}"></canvas><span class="icon-size-lbl">${s}px</span></div>`).join('')}</div>
+        </div>
+      </div>
+      <div class="icon-subrow">
+        <div class="icon-subrow-lbl">Bars Only</div>
+        <div class="icon-pair">
+          <div class="icon-page pg-light">${ICON_PREVIEW_SIZES.map(s=>`<div class="icon-size-col"><canvas id="ic-${v.num}-bars-light-${s}" width="${s}" height="${s}"></canvas><span class="icon-size-lbl">${s}px</span></div>`).join('')}</div>
+          <div class="icon-page pg-dark">${ICON_PREVIEW_SIZES.map(s=>`<div class="icon-size-col"><canvas id="ic-${v.num}-bars-dark-${s}" width="${s}" height="${s}"></canvas><span class="icon-size-lbl">${s}px</span></div>`).join('')}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderIconPreviews(){
+  ICON_VARIANTS.forEach(v=>{
+    ['plane','bars'].forEach(mode=>{
+      ['light','dark'].forEach(pg=>{
+        ICON_PREVIEW_SIZES.forEach(s=>{
+          const canvas = document.getElementById(`ic-${v.num}-${mode}-${pg}-${s}`);
+          renderIconCanvas(canvas, s, v, mode==='plane');
+        });
+      });
+    });
+  });
+}
+
 function drawLetterSpaced(ctx,text,x,y,spacing){
   let cx = x;
   for(const ch of text){
