@@ -203,8 +203,7 @@ function barsPlaneSVG(cfg){
       </mask>
     </defs>
     <g>${barsMarkup}</g>
-    ${highlightGloss}
-    <g>${highlightCaps}</g>
+    ${hl.overlay}
     <path d="M8,46 Q30,2 54,14" fill="none" stroke="${cfg.plane}" stroke-width="2" stroke-linecap="round" stroke-dasharray="1.6 4.2" mask="url(#${maskId})"/>
     <g>
       <path d="M-6,-3.5 L7,0 L-6,3.5 L-3,0 Z" fill="${cfg.plane}"/>
