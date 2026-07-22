@@ -414,6 +414,30 @@ document.getElementById('barsVariants').insertAdjacentHTML('beforeend', `
   </div>
 `);
 
+/* ---- TEMP: Full Logo — "Bold Glass Gold" proposal ----
+   Same barsPlaneSVG shape/layout/plane/trail as every other variant above;
+   only the bar treatment differs, via a new 'glass' highlight technique
+   (see glassHL): a bold saturated amber→gold gradient body, a clipped
+   glossy highlight lens per bar (light hitting a convex glass surface),
+   a bold bright rim edge, and a soft contact shadow for weight. Not
+   applied to /exports until confirmed. ---- */
+const BARS_VARIANT_GLASS = {
+  num:5, name:'Bold Glass Gold',
+  tag:'Bold, saturated amber-gold glass — deep shadow base, vivid gold body, a glossy highlight lens per bar, and a crisp bold rim edge.',
+  light:{ barGrad:['#6B3206','#FFC24D'], plane:'#8A3F0A', highlight:'glass' },
+  dark:{ barGrad:['#B36A18','#FFD98A'], plane:'#FFD37A', highlight:'glass' },
+};
+document.getElementById('barsVariants').insertAdjacentHTML('beforeend', `
+  <div class="variant-block" style="border:2px dashed #B45309;">
+    <div class="variant-title"><span class="num" style="background:#B45309;">5</span><h3>Full Logo — ${BARS_VARIANT_GLASS.name}</h3></div>
+    <p class="variant-tag">${BARS_VARIANT_GLASS.tag} New proposal (bold + glassy), not yet applied to /exports.</p>
+    <div class="tile-row">
+      ${tile('light', barsPlaneSVG(BARS_VARIANT_GLASS.light)+wordmark(false, BARS_VARIANT_GLASS.light.plane), 'Bold Glass Gold — Light', 'hover / tap to replay')}
+      ${tile('dark', barsPlaneSVG(BARS_VARIANT_GLASS.dark)+wordmark(true, BARS_VARIANT_GLASS.dark.plane), 'Bold Glass Gold — Dark', 'hover / tap to replay')}
+    </div>
+  </div>
+`);
+
 /* ================================================================
    APP ICON TREATMENTS — redesigned for small-size punch.
    Square viewBox, thicker bars, no dotted trail. Background depth
