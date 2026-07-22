@@ -264,6 +264,39 @@ function rimlightHL(bars, barW, id, delay){
   return {defs, before:'', after, barFillOverride:`url(#${gradId})`};
 }
 
+// 6. BOLD GLASS — a saturated, high-contrast gradient body (deep shadow → vivid gold → hot glass
+// band near the top) plus a clipped glossy highlight lens per bar (like light hitting a convex
+// glass/acrylic surface), a bold bright rim edge, and a grounding contact shadow for weight.
+function glassHL(bars, barW, darkC, lightC, baseline, id, delay){
+  const gradId = id+'-gl', glossId = id+'-gloss', clipId = id+'-gc', shId = id+'-gsh';
+  const dl = mixHex(darkC, lightC, .5);
+  const hot = mixHex(lightC, '#FFFBEF', .7);
+  const stops = [[0,darkC],[.34,dl],[.6,lightC],[.8,hot],[1,mixHex(lightC,hot,.45)]];
+  const clipRects = bars.map(b=>`<rect x="${b.x}" y="${b.y}" width="${barW}" height="${b.h}" rx="${barW/2}"/>`).join('');
+  const spanX0 = bars[0].x, spanX1 = bars[bars.length-1].x+barW;
+  const cx = (spanX0+spanX1)/2 + 3, w = (spanX1-spanX0)+10;
+  const defs = `<linearGradient id="${gradId}" x1="0" y1="1" x2="1" y2="0">${stops.map(([o,c])=>`<stop offset="${o}" stop-color="${c}"/>`).join('')}</linearGradient>
+    <radialGradient id="${glossId}" cx="35%" cy="22%" r="70%">
+      <stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".55" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="${shId}" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#000" stop-opacity=".38"/><stop offset="65%" stop-color="#000" stop-opacity=".2"/><stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="${clipId}">${clipRects}</clipPath>`;
+  const before = `<ellipse cx="${cx}" cy="${baseline+3}" rx="${w*0.58}" ry="${w*0.13}" fill="url(#${shId})" opacity="0">
+    <animate attributeName="opacity" from="0" to="1" dur=".4s" begin="indefinite" fill="freeze" data-delay="${delay}"/>
+  </ellipse>`;
+  const after = `<g clip-path="url(#${clipId})" opacity="0">
+      ${bars.map(b=>`<ellipse cx="${b.x+barW*0.38}" cy="${b.y+b.h*0.22}" rx="${barW*0.5}" ry="${Math.max(6,b.h*0.2)}" fill="url(#${glossId})"/>`).join('')}
+      <animate attributeName="opacity" from="0" to="1" dur=".4s" begin="indefinite" fill="freeze" data-delay="${delay+80}"/>
+    </g>
+    <g opacity="0">
+      ${bars.map(b=>`<rect x="${b.x}" y="${b.y}" width="${barW}" height="${b.h}" rx="${barW/2}" fill="none" stroke="#FFF6DE" stroke-width="1.7"/>`).join('')}
+      <animate attributeName="opacity" from="0" to=".95" dur=".35s" begin="indefinite" fill="freeze" data-delay="${delay+160}"/>
+    </g>`;
+  return {defs, before, after, barFillOverride:`url(#${gradId})`};
+}
+
 function highlightParts(style, bars, barW, darkC, lightC, baseline, viewW, viewH, accent, id, delay){
   switch(style){
     case 'foil': return foilHL(bars, barW, darkC, lightC, id, delay);
@@ -271,6 +304,7 @@ function highlightParts(style, bars, barW, darkC, lightC, baseline, viewW, viewH
     case 'bevel': return bevelHL(bars, barW, viewW, viewH, id, delay);
     case 'burst': return burstHL(bars, barW, viewW, viewH, accent, id, delay);
     case 'rimlight': return rimlightHL(bars, barW, id, delay);
+    case 'glass': return glassHL(bars, barW, darkC, lightC, baseline, id, delay);
     default: return NOOP_HL;
   }
 }
