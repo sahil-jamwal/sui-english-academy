@@ -357,6 +357,29 @@ document.getElementById('barsVariants').innerHTML = BARS_VARIANTS.map(v=>`
   </div>
 `).join('');
 
+/* ---- TEMP COMPARISON ONLY: Full Logo 4 — Monochrome Gold, brightened ----
+   Same exact shape/config as BARS_VARIANTS num:4 above; only the barFlat
+   and plane colors are lifted (lightness pulled toward white proportional
+   to headroom, so already-light tones don't blow out), keeping the same
+   relative shade-to-shade depth pattern. Not applied to /exports until
+   confirmed — shown here purely for side-by-side comparison. ---- */
+const BARS_VARIANT_4_BRIGHT = {
+  num:4, name:'Monochrome Gold — Brighter (proposed)',
+  tag:'Same one-tone family and shade steps as Variant 4 above, lifted brighter/more luminous overall.',
+  light:{ barFlat:['#F7DDA7','#F0D192','#E6C07A','#DDAF5A'], plane:'#DFA02B' },
+  dark:{ barFlat:['#FEEFCC','#FAE2A8','#F2D189','#E0BD75'], plane:'#FFF0C8' },
+};
+document.getElementById('barsVariants').insertAdjacentHTML('beforeend', `
+  <div class="variant-block" style="border:2px dashed #B45309;">
+    <div class="variant-title"><span class="num" style="background:#B45309;">4B</span><h3>Full Logo 4 — ${BARS_VARIANT_4_BRIGHT.name}</h3></div>
+    <p class="variant-tag">${BARS_VARIANT_4_BRIGHT.tag} Compare directly against "Full Logo 4 — Monochrome Gold" above (current/unbrightened). Not yet applied to /exports.</p>
+    <div class="tile-row">
+      ${tile('light', barsPlaneSVG(BARS_VARIANT_4_BRIGHT.light)+wordmark(false, BARS_VARIANT_4_BRIGHT.light.plane), 'Variant 4B — Light (brighter)', 'hover / tap to replay')}
+      ${tile('dark', barsPlaneSVG(BARS_VARIANT_4_BRIGHT.dark)+wordmark(true, BARS_VARIANT_4_BRIGHT.dark.plane), 'Variant 4B — Dark (brighter)', 'hover / tap to replay')}
+    </div>
+  </div>
+`);
+
 /* ================================================================
    APP ICON TREATMENTS — redesigned for small-size punch.
    Square viewBox, thicker bars, no dotted trail. Background depth
