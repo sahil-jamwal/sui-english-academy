@@ -430,6 +430,62 @@ document.getElementById('barsVariants').insertAdjacentHTML('beforeend', `
   </div>
 `);
 
+/* ---- TEMP: Full Logo 4 — "Monochrome Gold" high-contrast fix for small sizes ----
+   Same barsPlaneSVG shape/plane/trail/rim as Full Logo 4 (BARS_VARIANTS[3]) — the
+   ONLY change is the barFlat shade range, recomputed in HSL at a fixed ~40° gold
+   hue so it stays one tone family, but with the darkest stop pulled much deeper
+   and saturation raised across the board (was a narrow pale band ~50-80% L,
+   this is ~27-84% L). BARS_VARIANTS[3] itself is untouched. Not applied to
+   /exports until confirmed. ---- */
+const FULL_LOGO4_ORIGINAL = BARS_VARIANTS[3];
+const FULL_LOGO4_BOLD = {
+  light:{ barFlat:['#EBCC8E','#EAB03E','#C68910','#815908'], plane:'#B8790A' },
+  dark:{ barFlat:['#F1DFBC','#ECC679','#EAB03E','#D49311'], plane:'#FFD666' },
+};
+function waDpCell(label, bg, cfg){
+  return `<div class="wa-dp-col">
+    <div class="wa-dp" style="background:${bg}">${barsPlaneSVG(cfg)}</div>
+    <span class="wa-dp-lbl">${label}</span>
+  </div>`;
+}
+const WA_DUMMIES = `
+  <div class="wa-dummy" style="background:#25D366">JS</div>
+  <div class="wa-dummy" style="background:#5B51D8">AK</div>
+  <div class="wa-dummy" style="background:#E1306C">MP</div>
+  <div class="wa-dummy" style="background:#1DA1F2">RT</div>`;
+document.getElementById('barsVariants').insertAdjacentHTML('beforeend', `
+  <div class="variant-block" style="border:2px dashed #B45309;">
+    <div class="variant-title"><span class="num" style="background:#B45309;">4</span><h3>Full Logo 4 — Monochrome Gold, High-Contrast Fix (small-size / WhatsApp DP)</h3></div>
+    <p class="variant-tag">Exact same bars, plane, direction, trail and rim outline as Full Logo 4 above — only the shade range changes: the darkest bar is pulled much deeper and the whole gold range is more saturated, so it still reads clearly at ~120px in a circle. Still a single gold hue, just a bolder range of it. Not applied to /exports until confirmed.</p>
+
+    <div class="icon-subrow">
+      <div class="icon-subrow-lbl">Light background</div>
+      <div class="wa-compare">
+        <div><div class="wa-compare-lbl">Current (washed out)</div>${tile('light', barsPlaneSVG(FULL_LOGO4_ORIGINAL.light)+wordmark(false, FULL_LOGO4_ORIGINAL.light.plane), 'Light — current', 'hover / tap to replay')}</div>
+        <div><div class="wa-compare-lbl bold">Bold fix</div>${tile('light', barsPlaneSVG(FULL_LOGO4_BOLD.light)+wordmark(false, FULL_LOGO4_BOLD.light.plane), 'Light — bold fix', 'hover / tap to replay')}</div>
+      </div>
+      <div class="wa-context wa-light">
+        ${waDpCell('Current DP (~120px)', 'var(--ivory)', FULL_LOGO4_ORIGINAL.light)}
+        ${waDpCell('Bold fix DP (~120px)', 'var(--ivory)', FULL_LOGO4_BOLD.light)}
+        ${WA_DUMMIES}
+      </div>
+    </div>
+
+    <div class="icon-subrow">
+      <div class="icon-subrow-lbl">Dark background</div>
+      <div class="wa-compare">
+        <div><div class="wa-compare-lbl">Current (washed out)</div>${tile('dark', barsPlaneSVG(FULL_LOGO4_ORIGINAL.dark)+wordmark(true, FULL_LOGO4_ORIGINAL.dark.plane), 'Dark — current', 'hover / tap to replay')}</div>
+        <div><div class="wa-compare-lbl bold">Bold fix</div>${tile('dark', barsPlaneSVG(FULL_LOGO4_BOLD.dark)+wordmark(true, FULL_LOGO4_BOLD.dark.plane), 'Dark — bold fix', 'hover / tap to replay')}</div>
+      </div>
+      <div class="wa-context wa-dark">
+        ${waDpCell('Current DP (~120px)', 'var(--dark-bg)', FULL_LOGO4_ORIGINAL.dark)}
+        ${waDpCell('Bold fix DP (~120px)', 'var(--dark-bg)', FULL_LOGO4_BOLD.dark)}
+        ${WA_DUMMIES}
+      </div>
+    </div>
+  </div>
+`);
+
 /* ================================================================
    APP ICON TREATMENTS — redesigned for small-size punch.
    Square viewBox, thicker bars, no dotted trail. Background depth
