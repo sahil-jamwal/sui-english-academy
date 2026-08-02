@@ -177,112 +177,127 @@ PROFILE_PICTURES = [
 
 
 # ---------------------------------------------------------------------------
-# PART 2 — BANNERS
+# PART 2 — BANNERS (premium redesign — full lockup only, never the icon alone)
 # ---------------------------------------------------------------------------
 
-def bg_gradient_div(width, height, angle="135deg"):
+def radial_spotlight_bg(cx=50, cy=42):
+    """Center-lighter, edge-darker radial gradient — 'spotlight/stage' feel."""
     return (
         f'<div style="position:absolute;inset:0;'
-        f'background:linear-gradient({angle}, {BG1}, {BG2});"></div>'
+        f'background:radial-gradient(ellipse at {cx}% {cy}%, {BG2} 0%, {BG1} 72%);"></div>'
     )
 
 
-def skyline_bars_decor(canvas_w, canvas_h):
-    """4 P5-style staircase bars, scaled very large, faded, lower-half skyline."""
-    bar_defs = [
-        (0.12, 0.28), (0.30, 0.42), (0.48, 0.56), (0.66, 0.70),
-    ]  # (left fraction, height fraction of canvas)
-    bar_w = round(canvas_w * 0.11)
-    bars_html = ""
+def linear_lr_bg():
+    """Left (where the logo sits) slightly lighter, fading darker to the right."""
+    return (
+        f'<div style="position:absolute;inset:0;'
+        f'background:linear-gradient(90deg, {BG2}, {BG1} 75%);"></div>'
+    )
+
+
+def vignette_div(strength=0.32):
+    """Subtle inner vignette — all four edges a touch darker than the center."""
+    return (
+        f'<div style="position:absolute;inset:0;'
+        f'background:radial-gradient(ellipse at center, rgba(0,0,0,0) 56%, '
+        f'rgba(0,0,0,{strength}) 100%);"></div>'
+    )
+
+
+def skyline_bars_lower_right(w, h, opacity=0.08, glow_opacity=0.15):
+    """4 P5-style staircase bars at 3x scale, lower-right, like a glowing
+    skyline rising from the bottom, plus a soft amber glow behind them."""
+    bar_defs = [(0.60, 0.32), (0.71, 0.44), (0.82, 0.56), (0.91, 0.66)]
+    bar_w = w * 0.075
+    bars = ""
     for left_f, h_f in bar_defs:
-        left = round(canvas_w * left_f)
-        h = round(canvas_h * h_f)
-        bars_html += (
-            f'<div style="position:absolute;left:{left}px;bottom:0;'
-            f'width:{bar_w}px;height:{h}px;border-radius:{bar_w//2}px '
-            f'{bar_w//2}px 0 0;background:{GOLD};opacity:.08;"></div>'
+        left = w * left_f
+        bh = h * h_f
+        bars += (
+            f'<div style="position:absolute;left:{left:.0f}px;bottom:0;'
+            f'width:{bar_w:.0f}px;height:{bh:.0f}px;border-radius:{bar_w/2:.0f}px '
+            f'{bar_w/2:.0f}px 0 0;background:{GOLD};opacity:{opacity};"></div>'
         )
-    glow_size = round(canvas_w * 0.55)
+    glow_size = w * 0.5
+    glow_left = w * 0.78 - glow_size / 2
     glow = (
-        f'<div style="position:absolute;left:50%;bottom:-{round(glow_size*0.45)}px;'
-        f'width:{glow_size}px;height:{glow_size}px;transform:translateX(-50%);'
-        f'border-radius:50%;'
-        f'background:radial-gradient(circle, rgba(245,166,35,.28), rgba(245,166,35,0) 70%);"></div>'
+        f'<div style="position:absolute;left:{glow_left:.0f}px;bottom:-{glow_size*0.42:.0f}px;'
+        f'width:{glow_size:.0f}px;height:{glow_size:.0f}px;border-radius:50%;'
+        f'background:radial-gradient(circle, rgba(245,166,35,{glow_opacity}), '
+        f'rgba(245,166,35,0) 70%);"></div>'
     )
-    return f'<div style="position:absolute;inset:0;overflow:hidden;">{glow}{bars_html}</div>'
+    return f'<div style="position:absolute;inset:0;overflow:hidden;">{glow}{bars}</div>'
 
 
-def dotted_arc_decor(canvas_w, canvas_h, opacity, stroke_w, arc_y_frac=0.5, sag_frac=0.35):
-    """A single sweeping dotted arc spanning the full canvas width."""
-    y0 = canvas_h * arc_y_frac
-    peak = canvas_h * (arc_y_frac - sag_frac)
-    d = f"M0,{y0:.0f} Q{canvas_w/2:.0f},{peak:.0f} {canvas_w:.0f},{y0:.0f}"
-    return f"""<svg style="position:absolute;inset:0;" width="{canvas_w}" height="{canvas_h}"
-      viewBox="0 0 {canvas_w} {canvas_h}" xmlns="http://www.w3.org/2000/svg">
+def diagonal_sweep_arc(w, h, opacity=0.10, stroke_w=8):
+    """One grand dotted arc, same dash style as the P5 trail, sweeping the
+    full canvas width from bottom-left to upper-right."""
+    x0, y0 = 0, h * 0.88
+    x1, y1 = w * 0.5, h * 0.16
+    x2, y2 = w, h * 0.04
+    d = f"M{x0:.0f},{y0:.0f} Q{x1:.0f},{y1:.0f} {x2:.0f},{y2:.0f}"
+    return f"""<svg style="position:absolute;inset:0;" width="{w}" height="{h}"
+      viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg">
       <path d="{d}" fill="none" stroke="{GOLD}" stroke-width="{stroke_w}"
-        stroke-linecap="round" stroke-dasharray="2 {stroke_w*3.2:.0f}" opacity="{opacity}"/>
+        stroke-linecap="round" stroke-dasharray="2 {stroke_w*3.4:.0f}" opacity="{opacity}"/>
     </svg>"""
 
 
-def scattered_dots_decor(canvas_w, canvas_h, count, opacity, seed=42):
+def constellation_dots(w, h, count=13, opacity=0.08, seed=5):
+    """A handful of tiny scattered dots, asymmetric, for quiet depth."""
     rnd = random.Random(seed)
     dots = ""
     for _ in range(count):
-        x = rnd.uniform(0, canvas_w)
-        y = rnd.uniform(0, canvas_h)
-        r = rnd.uniform(1, 2.6)
+        x = rnd.uniform(0.04 * w, 0.96 * w)
+        y = rnd.uniform(0.05 * h, 0.85 * h)
+        r = rnd.uniform(1.4, 3.4)
         dots += f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.1f}" fill="#FFFFFF"/>'
-    return f"""<svg style="position:absolute;inset:0;" width="{canvas_w}" height="{canvas_h}"
-      viewBox="0 0 {canvas_w} {canvas_h}" xmlns="http://www.w3.org/2000/svg" opacity="{opacity}">
-      {dots}
+    return f"""<svg style="position:absolute;inset:0;" width="{w}" height="{h}"
+      viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg" opacity="{opacity}">{dots}</svg>"""
+
+
+def top_edge_dotted_line(w, h, opacity=0.10, stroke_w=2.2):
+    """A thin dotted trail-style accent line hugging the very top edge."""
+    y0 = h * 0.16
+    d = f"M0,{y0*1.1:.0f} Q{w/2:.0f},{y0*0.25:.0f} {w:.0f},{y0*0.6:.0f}"
+    return f"""<svg style="position:absolute;inset:0;" width="{w}" height="{h}"
+      viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg">
+      <path d="{d}" fill="none" stroke="{GOLD}" stroke-width="{stroke_w}"
+        stroke-linecap="round" stroke-dasharray="1.6 {stroke_w*3.4:.0f}" opacity="{opacity}"/>
     </svg>"""
 
 
-def equalizer_decor(canvas_w, canvas_h):
-    """P5 bars repeated horizontally like a sound-wave / equalizer, centered."""
-    rnd = random.Random(7)
-    n = 26
-    total_w = canvas_w * 0.82
-    bar_w = total_w / (n * 1.7)
-    gap = bar_w * 0.7
-    start_x = (canvas_w - (n * bar_w + (n - 1) * gap)) / 2
-    mid_y = canvas_h * 0.5
-    bars = ""
-    for i in range(n):
-        h = rnd.uniform(canvas_h * 0.05, canvas_h * 0.22)
-        x = start_x + i * (bar_w + gap)
-        bars += (
-            f'<rect x="{x:.1f}" y="{mid_y - h/2:.1f}" width="{bar_w:.1f}" height="{h:.1f}" '
-            f'rx="{bar_w/2:.1f}" fill="{GOLD}"/>'
-        )
-    return f"""<svg style="position:absolute;inset:0;" width="{canvas_w}" height="{canvas_h}"
-      viewBox="0 0 {canvas_w} {canvas_h}" xmlns="http://www.w3.org/2000/svg" opacity=".07">
-      {bars}
-    </svg>"""
+def gold_separator(height_px, opacity=1):
+    return (
+        f'<div style="width:1px;height:{height_px:.0f}px;background:{GOLD};'
+        f'opacity:{opacity};flex:none;"></div>'
+    )
 
 
-# ---- Facebook cover (CLAUDE.md spec: 1640x922, safe zone 640x312) ----------
+# ---- Facebook cover (1640x922, safe zone 640x312) --------------------------
 def facebook_cover_html():
     W, H = 1640, 922
     safe_w, safe_h = 640, 312
-    left = (W - safe_w) / 2
-    top = (H - safe_h) / 2
+    left, top = (W - safe_w) / 2, (H - safe_h) / 2
+    lockup = p5_lockup(78, glow_opacity=0.38, glow_scale=1.9)
+    sep_h = safe_h * 0.6
     body = f"""
-    <div style="position:relative;width:{W}px;height:{H}px;">
-      {bg_gradient_div(W, H)}
-      {skyline_bars_decor(W, H)}
-      <div style="position:absolute;left:{left}px;top:{top}px;width:{safe_w}px;height:{safe_h}px;">
-        <div style="position:absolute;top:50%;left:0;transform:translateY(-50%);
-                    display:flex;align-items:center;width:100%;">
-          {p5_mark(100)}
-          <div style="margin-left:34px;font-weight:700;font-size:38px;line-height:1.18;">
-            <div style="color:{WHITE};">90 days from now</div>
-            <div style="color:{WHITE};">you will wish</div>
-            <div style="color:{GOLD};">you had started today.</div>
-          </div>
+    <div style="position:relative;width:{W}px;height:{H}px;overflow:hidden;">
+      {radial_spotlight_bg()}
+      {skyline_bars_lower_right(W, H, opacity=0.08, glow_opacity=0.15)}
+      {vignette_div(0.34)}
+      <div style="position:absolute;left:{left:.0f}px;top:{top:.0f}px;width:{safe_w}px;height:{safe_h}px;
+                  display:flex;align-items:center;">
+        {lockup}
+        {gold_separator(sep_h)}
+        <div style="margin-left:26px;display:flex;flex-direction:column;">
+          <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:22px;line-height:1.6;letter-spacing:.015em;color:{WHITE};">Most people learn English.</div>
+          <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:22px;line-height:1.6;letter-spacing:.015em;color:{WHITE};">Nobody teaches them</div>
+          <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:22px;line-height:1.6;letter-spacing:.015em;color:{WHITE};">how to actually speak it.</div>
+          <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:27px;line-height:1.4;letter-spacing:.015em;color:{GOLD};margin-top:8px;">We do.</div>
+          <div style="font-family:'Sora',sans-serif;font-weight:400;font-size:14px;letter-spacing:.14em;color:{PALE_GOLD};margin-top:20px;">suienglishacademy.in</div>
         </div>
-        <div style="position:absolute;bottom:0;right:0;font-size:16px;
-                    color:{GOLD_LIGHT};font-weight:600;">suienglishacademy.in</div>
       </div>
     </div>"""
     return page_shell(body, W, H), W, H
@@ -292,22 +307,24 @@ def facebook_cover_html():
 def youtube_banner_html():
     W, H = 2560, 1440
     safe_w, safe_h = 1546, 423
-    left = (W - safe_w) / 2
-    top = (H - safe_h) / 2
+    left, top = (W - safe_w) / 2, (H - safe_h) / 2
+    lockup = p5_lockup(170, glow_opacity=0.36, glow_scale=1.8)
+    sep_h = safe_h
     body = f"""
-    <div style="position:relative;width:{W}px;height:{H}px;">
-      {bg_gradient_div(W, H)}
-      {dotted_arc_decor(W, H, 0.10, 8, arc_y_frac=0.62, sag_frac=0.30)}
-      {scattered_dots_decor(W, H, 140, 0.06, seed=11)}
-      <div style="position:absolute;left:{left}px;top:{top}px;width:{safe_w}px;height:{safe_h}px;
+    <div style="position:relative;width:{W}px;height:{H}px;overflow:hidden;">
+      {radial_spotlight_bg()}
+      {diagonal_sweep_arc(W, H, opacity=0.10, stroke_w=9)}
+      {constellation_dots(W, H, count=14, opacity=0.08, seed=11)}
+      {vignette_div(0.30)}
+      <div style="position:absolute;left:{left:.0f}px;top:{top:.0f}px;width:{safe_w}px;height:{safe_h}px;
                   display:flex;align-items:center;">
-        {p5_mark(200)}
-        <div style="width:2px;height:180px;background:{GOLD};margin:0 46px;"></div>
-        <div style="display:flex;flex-direction:column;">
-          <div style="font-weight:700;font-size:54px;line-height:1.2;color:{WHITE};">Most people study English for years</div>
-          <div style="font-weight:700;font-size:54px;line-height:1.2;color:{WHITE};">and never become fluent.</div>
-          <div style="font-weight:600;font-size:38px;line-height:1.3;color:{GOLD};margin-top:14px;">Here's what they're missing.</div>
-          <div style="font-size:24px;color:{GOLD_LIGHT};font-weight:600;margin-top:28px;">SUI English Academy &middot; New videos every week</div>
+        {lockup}
+        {gold_separator(sep_h)}
+        <div style="margin-left:46px;display:flex;flex-direction:column;">
+          <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:42px;line-height:1.35;letter-spacing:.01em;color:{WHITE};">Most people study English for years</div>
+          <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:42px;line-height:1.35;letter-spacing:.01em;color:{WHITE};">and never become fluent.</div>
+          <div style="font-family:'Sora',sans-serif;font-weight:600;font-size:28px;line-height:1.4;letter-spacing:.01em;color:{GOLD};margin-top:14px;">Here's what they're missing.</div>
+          <div style="font-family:'Sora',sans-serif;font-weight:400;font-size:17px;letter-spacing:.14em;color:{PALE_GOLD};margin-top:30px;">suienglishacademy.in</div>
         </div>
       </div>
     </div>"""
@@ -318,47 +335,53 @@ def youtube_banner_html():
 def linkedin_banner_html():
     W, H = 1128, 191
     pad = 40
+    lockup = p5_lockup(110, glow_opacity=0.18, glow_scale=1.5)
+    inner_h = H - 2 * pad
     body = f"""
-    <div style="position:relative;width:{W}px;height:{H}px;">
-      {bg_gradient_div(W, H)}
-      {dotted_arc_decor(W, H, 0.12, 3, arc_y_frac=0.16, sag_frac=0.12)}
-      <div style="position:absolute;left:{pad}px;top:{pad}px;width:{W-2*pad}px;height:{H-2*pad}px;
+    <div style="position:relative;width:{W}px;height:{H}px;overflow:hidden;">
+      {linear_lr_bg()}
+      {top_edge_dotted_line(W, H, opacity=0.10)}
+      <div style="position:absolute;left:{pad}px;top:{pad}px;width:{W-2*pad}px;height:{inner_h}px;
                   display:flex;align-items:center;">
-        {p5_mark(100)}
-        <div style="margin-left:24px;display:flex;flex-direction:column;">
-          <div style="font-weight:700;font-size:21px;line-height:1.3;color:{WHITE};">Spoken English is the highest-ROI</div>
-          <div style="font-weight:700;font-size:21px;line-height:1.3;color:{WHITE};">skill you're not investing in.</div>
+        {lockup}
+        <div style="margin:0 26px;">{gold_separator(round(inner_h*0.5))}</div>
+        <div style="display:flex;flex-direction:column;">
+          <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:18px;line-height:1.35;letter-spacing:.015em;color:{WHITE};">Spoken English is the highest-ROI</div>
+          <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:18px;line-height:1.35;letter-spacing:.015em;color:{WHITE};">skill you're not investing in.</div>
         </div>
         <div style="flex:1;"></div>
-        <div style="width:2px;height:70px;background:{GOLD};margin:0 28px;"></div>
-        <div style="display:flex;flex-direction:column;align-items:flex-start;">
-          <div style="font-weight:700;font-size:19px;color:{GOLD_LIGHT};">2,400+ students coached</div>
-          <div style="font-weight:600;font-size:14px;color:{WHITE};margin-top:4px;">SUI English Academy</div>
+        <div style="margin:0 26px;">{gold_separator(round(inner_h*0.5))}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;text-align:right;">
+          <div style="font-family:'Sora',sans-serif;font-weight:600;font-size:16px;letter-spacing:.02em;color:{PALE_GOLD};">2,400+ students coached</div>
+          <div style="font-family:'Sora',sans-serif;font-weight:400;font-size:13px;letter-spacing:.04em;color:{LAVENDER};margin-top:4px;">suienglishacademy.in</div>
         </div>
       </div>
     </div>"""
     return page_shell(body, W, H), W, H
 
 
-# ---- WhatsApp Business banner (1080x1920 portrait) -------------------------
-def whatsapp_banner_html():
-    W, H = 1080, 1920
+# ---- WhatsApp Business cover (1125x633, landscape) -------------------------
+def whatsapp_cover_html():
+    W, H = 1125, 633
+    band_h = H * 0.72  # keep clear of the center-bottom circular-avatar overlap
+    lockup = p5_lockup(120, glow_opacity=0.4, glow_scale=1.9)
     body = f"""
-    <div style="position:relative;width:{W}px;height:{H}px;">
-      {bg_gradient_div(W, H, angle="180deg")}
-      {equalizer_decor(W, H)}
-      <div style="position:relative;width:100%;height:100%;display:flex;
-                  flex-direction:column;align-items:center;justify-content:center;">
-        <div style="margin-bottom:90px;">{p5_mark(600)}</div>
-        <div style="text-align:center;">
-          <div style="font-weight:800;font-size:66px;line-height:1.22;color:{WHITE};">The problem isn't your English.</div>
-          <div style="font-weight:700;font-size:46px;line-height:1.3;color:{WHITE};margin-top:16px;">It's that nobody ever taught you</div>
-          <div style="font-weight:700;font-size:46px;line-height:1.3;color:{GOLD};margin-top:4px;">how to practice it.</div>
+    <div style="position:relative;width:{W}px;height:{H}px;overflow:hidden;">
+      {radial_spotlight_bg(50, 38)}
+      {skyline_bars_lower_right(W, H, opacity=0.08, glow_opacity=0.16)}
+      {diagonal_sweep_arc(W, H, opacity=0.10, stroke_w=6)}
+      {vignette_div(0.34)}
+      <div style="position:absolute;left:0;top:0;width:100%;height:{band_h:.0f}px;
+                  display:flex;align-items:center;justify-content:space-between;
+                  padding:0 78px;">
+        {lockup}
+        <div style="display:flex;flex-direction:column;">
+          <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:26px;line-height:1.55;letter-spacing:.015em;color:{WHITE};">Most people learn English.</div>
+          <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:26px;line-height:1.55;letter-spacing:.015em;color:{WHITE};">Nobody teaches them</div>
+          <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:26px;line-height:1.55;letter-spacing:.015em;color:{WHITE};">how to actually speak it.</div>
+          <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:32px;line-height:1.4;letter-spacing:.015em;color:{GOLD};margin-top:8px;">We do.</div>
+          <div style="font-family:'Sora',sans-serif;font-weight:400;font-size:15px;letter-spacing:.14em;color:{PALE_GOLD};margin-top:22px;">suienglishacademy.in</div>
         </div>
-        <div style="margin-top:90px;background:{GOLD};border-radius:999px;padding:26px 50px;">
-          <span style="font-weight:700;font-size:32px;color:{INK};">WhatsApp +91 9250167119</span>
-        </div>
-        <div style="margin-top:22px;font-size:24px;font-weight:600;color:{GOLD_LIGHT};">suienglishacademy.in</div>
       </div>
     </div>"""
     return page_shell(body, W, H), W, H
@@ -368,7 +391,7 @@ BANNERS = [
     ("facebook-cover-1640x922.png", facebook_cover_html),
     ("youtube-banner-2560x1440.png", youtube_banner_html),
     ("linkedin-banner-1128x191.png", linkedin_banner_html),
-    ("whatsapp-banner-1080x1920.png", whatsapp_banner_html),
+    ("whatsapp-cover-1125x633.png", whatsapp_cover_html),
 ]
 
 
