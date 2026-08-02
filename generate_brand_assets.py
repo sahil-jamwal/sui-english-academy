@@ -7,6 +7,7 @@ Run:  .venv-assets\\Scripts\\python.exe generate_brand_assets.py
 
 import os
 import random
+import sys
 
 from playwright.sync_api import sync_playwright
 from PIL import Image
