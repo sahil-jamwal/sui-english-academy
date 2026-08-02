@@ -416,19 +416,20 @@ def capture(page, html, width, height, out_path):
     os.remove(raw_path)
 
 
-def main():
+def main(include_profile_pictures=True):
     results = []
     with sync_playwright() as p:
         browser = p.chromium.launch()
         context = browser.new_context(device_scale_factor=SCALE)
         page = context.new_page()
 
-        for filename, size in PROFILE_PICTURES:
-            out_path = os.path.join(PROFILE_DIR, filename)
-            html = profile_picture_html(size)
-            capture(page, html, size, size, out_path)
-            results.append(out_path)
-            print(f"done: {filename}")
+        if include_profile_pictures:
+            for filename, size in PROFILE_PICTURES:
+                out_path = os.path.join(PROFILE_DIR, filename)
+                html = profile_picture_html(size)
+                capture(page, html, size, size, out_path)
+                results.append(out_path)
+                print(f"done: {filename}")
 
         for filename, builder in BANNERS:
             out_path = os.path.join(BANNER_DIR, filename)
