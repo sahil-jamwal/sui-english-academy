@@ -185,8 +185,8 @@ def dotted_arc_decor(canvas_w, canvas_h, opacity, stroke_w, arc_y_frac=0.5, sag_
     return f"""<svg style="position:absolute;inset:0;" width="{canvas_w}" height="{canvas_h}"
       viewBox="0 0 {canvas_w} {canvas_h}" xmlns="http://www.w3.org/2000/svg">
       <path d="{d}" fill="none" stroke="{GOLD}" stroke-width="{stroke_w}"
-        stroke-linecap="round" stroke-dasharray="2 {stroke_w*3.2:.0f})" opacity="{opacity}"/>
-    </svg>""".replace("3.2)", "3.2")  # (guard, no-op)
+        stroke-linecap="round" stroke-dasharray="2 {stroke_w*3.2:.0f}" opacity="{opacity}"/>
+    </svg>"""
 
 
 def scattered_dots_decor(canvas_w, canvas_h, count, opacity, seed=42):
