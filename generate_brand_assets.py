@@ -449,4 +449,4 @@ def main(include_profile_pictures=True):
 
 
 if __name__ == "__main__":
-    main()
+    main(include_profile_pictures="--banners-only" not in sys.argv)
