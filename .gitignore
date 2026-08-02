@@ -1,2 +1,12 @@
+.env
+.env.*
+*.key
+credentials.json
+secrets.json
+config.local.js
 .claude/settings.local.json
 .claude/settings.json
+.DS_Store
+Thumbs.db
+node_modules/
+*.log
