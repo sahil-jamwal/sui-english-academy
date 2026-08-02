@@ -88,6 +88,39 @@ def p5_mark(height_px):
     return svg
 
 
+def p5_lockup(mark_height, glow_opacity=0.35, glow_scale=1.75, glow_blur_factor=0.13):
+    """Full logo lockup exactly as in the nav: mark + 'SUI' / 'ENGLISH ACADEMY'
+    wordmark, laid out with the site's own proportions (.logo{display:flex;
+    align-items:center;gap:12px} at mark height 52px), scaled uniformly to
+    mark_height. A soft gold bloom sits behind the mark only. Never use
+    p5_mark() alone on a banner — this is the only lockup banners should use."""
+    scale = mark_height / 52
+    gap = 12 * scale
+    sui_size = 21.12 * scale
+    sub_size = 8.8 * scale
+    margin_top = 6 * scale
+    mark_w = mark_height * 64 / 80
+    mark = p5_mark(mark_height)
+
+    glow_size = mark_height * glow_scale
+    glow_left = mark_w / 2 - glow_size / 2
+    blur_px = mark_height * glow_blur_factor
+    glow = (
+        f'<div style="position:absolute;left:{glow_left:.0f}px;top:50%;'
+        f'transform:translateY(-50%);width:{glow_size:.0f}px;height:{glow_size:.0f}px;'
+        f'border-radius:50%;background:radial-gradient(circle, rgba(245,166,35,{glow_opacity}), '
+        f'rgba(245,166,35,0) 70%);filter:blur({blur_px:.0f}px);z-index:0;pointer-events:none;"></div>'
+    )
+    return f"""<div style="display:flex;align-items:center;gap:{gap:.0f}px;position:relative;flex:none;">
+      {glow}
+      <div style="position:relative;z-index:1;line-height:0;">{mark}</div>
+      <div style="position:relative;z-index:1;display:flex;flex-direction:column;line-height:1;">
+        <span style="font-family:'Sora',sans-serif;font-weight:800;font-size:{sui_size:.1f}px;color:{WHITE};letter-spacing:.02em;white-space:nowrap;">SUI</span>
+        <span style="font-family:'Sora',sans-serif;font-weight:600;font-size:{sub_size:.1f}px;letter-spacing:.3em;text-transform:uppercase;margin-top:{margin_top:.0f}px;color:{GOLD};white-space:nowrap;">English Academy</span>
+      </div>
+    </div>"""
+
+
 def trigger_and_freeze(page):
     """Fire the SVG's own SMIL animations so they settle into their frozen
     end state (bars raised, rim visible, trail drawn, plane at path end) —
