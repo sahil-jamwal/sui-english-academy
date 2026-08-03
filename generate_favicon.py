@@ -10,6 +10,10 @@ that background color, then the background tint is un-blended out of
 anti-aliased edge pixels. This avoids leaving a dark halo ring around the
 bars/rim/arc where anti-aliasing used to blend into the navy.
 
+After that, the art is cropped to its visible bounding box plus a small
+padding (see PAD_FRACTION) so the logo reads clearly at small favicon
+sizes instead of sitting tiny in the middle of a mostly-empty square.
+
 Outputs (all under /favicon/):
   favicon-16x16.png
   favicon-32x32.png
@@ -31,6 +35,7 @@ os.makedirs(OUT_DIR, exist_ok=True)
 
 SIZES = [16, 32, 48, 180]
 BG = (26, 22, 51)  # #1A1633
+PAD_FRACTION = 0.03  # padding on each side, as a fraction of the larger content dimension
 
 
 def color_to_alpha(im, bg):
@@ -72,9 +77,21 @@ def color_to_alpha(im, bg):
     return out
 
 
+def crop_and_pad(im, pad_fraction):
+    bbox = im.getbbox()
+    content = im.crop(bbox)
+    cw, ch = content.size
+    pad = round(max(cw, ch) * pad_fraction)
+    side = max(cw, ch) + pad * 2
+    canvas = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+    canvas.paste(content, ((side - cw) // 2, (side - ch) // 2), content)
+    return canvas
+
+
 def main():
     src = Image.open(SOURCE).convert("RGBA")
     transparent = color_to_alpha(src, BG)
+    transparent = crop_and_pad(transparent, PAD_FRACTION)
 
     resized = {}
     for size in SIZES:
