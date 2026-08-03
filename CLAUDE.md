@@ -31,6 +31,12 @@
 3. **Never touch the live site directly.** All changes go through the
    repo → commit → push → deploy.
 
+3a. **Never auto-commit or auto-push.** Every commit and push must be
+    a separate, explicit action only after the owner has reviewed the
+    change and clearly said to commit/push it. No hooks, scripts, or
+    automation may commit or push on file save/edit. This site is
+    live and real visitors see it — nothing goes live unreviewed.
+
 4. **Never invent content.** Do not write fake testimonials, fake student
    numbers, fake results, or claim features that do not exist yet.
    Specifically: there is NO audio feature, NO app, NO live chat, NO
